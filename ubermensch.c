@@ -372,6 +372,19 @@ static inline void ub_interpret(List *context, const char* input_str, List* _cod
         code = _code;
     }
 
+    if (_code == NULL)
+    {
+        code = bruter_new(UB_DEFAULT_SIZE);
+        original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
+        char* token = strtok(original_str, "\n\t \r");
+        while (token != NULL)
+        {
+            bruter_push(code, (Value){.p = token});
+            token = strtok(NULL, "\n\t \r");
+            i++;
+        }
+    }
+
     // interpreting goes here
     // interpreting goes here
     // interpreting goes here
