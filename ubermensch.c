@@ -26,10 +26,22 @@ typedef uintptr_t UInt;
     typedef double Float;
     typedef uint32_t UHalf;
     typedef int32_t Half;
+    #define INT_MAX INT64_MAX
+    #define INT_MIN INT64_MIN
+    #define UINT_MAX UINT64_MAX
+    #define UHALF_MAX UINT32_MAX
+    #define HALF_MAX INT32_MAX
+    #define HALF_MIN INT32_MIN
 #else
     typedef float Float;
     typedef uint16_t UHalf;
     typedef int16_t Half;
+    #define INT_MAX INT32_MAX
+    #define INT_MIN INT32_MIN
+    #define UINT_MAX UINT32_MAX
+    #define UHALF_MAX UINT16_MAX
+    #define HALF_MAX INT16_MAX
+    #define HALF_MIN INT16_MIN
 #endif
 
 #ifndef UB_DEFAULT_SIZE
@@ -60,7 +72,7 @@ typedef void (*Function)(List *stack);
    
 // List functions   
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
-static inline List*            ub_new(Int size);
+static inline List*              ub_new(Int size);
 // free the list    
 static inline void               ub_free(List *list);
 // double the list capacity   
@@ -74,23 +86,23 @@ static inline void               ub_unshift(List *list, Value value);
 // insert a value at index i in the list
 static inline void               ub_insert(List *list, Int i, Value value);
 // pop a value from the end of the list
-static inline Value            ub_pop(List *list);
+static inline Value              ub_pop(List *list);
 // shift a value from the start of the list
-static inline Value            ub_shift(List *list);
+static inline Value              ub_shift(List *list);
 // remove and return the value at index i in the list, shifting the rest of the list
-static inline Value            ub_remove(List *list, Int i);
+static inline Value              ub_remove(List *list, Int i);
 // fast remove a value at index i in the list, swapping it with the last element and popping it
-static inline Value            ub_fast_remove(List *list, Int i);
+static inline Value              ub_fast_remove(List *list, Int i);
 // swap two values in the list at indices i1 and i2
 static inline void               ub_swap(List *list, Int i1, Int i2);
 // find the index of a value in the list, returns -1 if not found
-static inline Int              ub_find(const List *list, Value value);
+static inline Int                ub_find(const List *list, Value value);
 // reverse the list in place   
 static inline void               ub_reverse(List *list);
 // create a copy of the list, with the same capacity and size, but new data array
-static inline List*            ub_copy(const List *list);
+static inline List*              ub_copy(const List *list);
 // get a value at index i in the list, returns a value with i set to -1 if index is out of range
-static inline Value            ub_get(const List *list, Int i);
+static inline Value              ub_get(const List *list, Int i);
 // set a value at index i in the list, if index is out of range, it will print an error and exit
 static inline void               ub_set(List *list, Int i, Value value);
 // get the ub version   
@@ -372,7 +384,7 @@ static inline void ub_interpret(List *context, const char* input_str, List* _cod
         code = _code;
     }
 
-    if (_code == NULL)
+    if (_code == NULL) // we need to do the preprocessing stuff
     {
         code = bruter_new(UB_DEFAULT_SIZE);
         original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
