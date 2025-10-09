@@ -48,7 +48,11 @@ typedef uintptr_t UInt;
     #define UB_DEFAULT_SIZE 0
 #endif
 
-typedef union Value
+typedef struct List List;
+typedef union Value Value;
+typedef void (*Function)(List *stack);
+
+union Value
 {
     // all types depend on the size of the pointer
     Int i;
@@ -56,9 +60,12 @@ typedef union Value
     UInt u;
     void* p;
     uint8_t b[sizeof(void*)];
-} Value;
+    // in C99 you cant cast a function pointer from a void*, 
+    // so we need the function pointer in the union as well
+    Function fn;
+};
 
-typedef struct List
+struct List
 {
     // the real size
     UHalf capacity;
@@ -66,9 +73,9 @@ typedef struct List
     UHalf size;
     // the data, it is a pointer to a Value array
     Value *data;
-} List;
+};
 
-typedef void (*Function)(List *stack);
+
    
 // List functions   
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
@@ -356,6 +363,13 @@ static inline void* ub_alloc(List* arena, size_t size)
     return ptr;
 }
 
+// interpreter special tokens
+#define IFGO_TOK INT_MAX - 1
+#define BANG_TOK INT_MAX - 2
+
+// not sure if this will be really included
+#define GET_TOK INT_MIN + 1
+
 // if you want to return something, pass a stack, values will be there
 // if you do not provide a stack, a new one will be created and freed at the end
 static inline void ub_interpret(List *context, const char* input_str, List* _code, List* _stack)
@@ -384,28 +398,85 @@ static inline void ub_interpret(List *context, const char* input_str, List* _cod
         code = _code;
     }
 
-    if (_code == NULL) // we need to do the preprocessing stuff
+    // no pre-processed code received
+    // so we need to do the preprocessing stuff
+    if (_code == NULL) 
     {
-        code = bruter_new(UB_DEFAULT_SIZE);
-        original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
+        code = ub_new(UB_DEFAULT_SIZE);
+
+        // Duplicate the input string to avoid modifying the original
+        original_str = strdup(input_str);
         char* token = strtok(original_str, "\n\t \r");
+        
         while (token != NULL)
         {
-            bruter_push(code, (Value){.p = token});
+            if (strcmp(token, "code") == 0)
+            {
+                ub_push(code, (Value){.p = code});
+            }
+            else if (strcmp(token, "stack") == 0)
+            {
+                ub_push(code, (Value){.p = stack});
+            }
+            else if (strcmp(token, "context") == 0)
+            {
+                ub_push(code, (Value){.p = context});
+            }
+            else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
+            {
+                ub_push(code, (Value){.i = atol(token)});
+            }
+            else 
+            {
+                // we dont know wtf is this
+                // lets just push the pointer to this token as it is
+                // as a last effort to not skip tokens nor crash
+                ub_push(code, (Value){.p = token});
+            }
             token = strtok(NULL, "\n\t \r");
             i++;
         }
     }
 
-    // interpreting goes here
-    // interpreting goes here
-    // interpreting goes here
-    // interpreting goes here
-    // interpreting goes here
-    // interpreting goes here
-    // interpreting goes here
-    // interpreting goes here
-    // interpreting goes here
+    // interpreting will be here
+    for (Int i = 0; i < code->size; i++)
+    {
+        switch(code->data[i].i)
+        {
+            case GET_TOK:
+            {
+                Int index_toget = ub_pop(stack).i;
+                if (index_toget < context->capacity)
+                {
+                    ub_push(stack, context->data[index_toget]);
+                }
+                else
+                {
+                    printf("cannot get variable %ld, curretly context capacity is %ls\n", index_toget, context->capacity);
+                }
+            }
+            break;
+            case BANG_TOK:
+            {
+                // in C99 you cant cast a function pointer from a void*
+                Function bang_func = ub_pop(stack).fn;
+                bang_func(stack);
+            }
+            break;
+            case IFGO_TOK:
+            {
+                bool cond = ub_pop(stack).i;
+                Int position = ub_pop(stack).i;
+                if (cond)
+                {
+                    i = position;
+                }
+            }
+            break;
+        }
+    }
+
+    // interpreting will be here
 
     if (_code == NULL) 
         ub_free(code); // free code only if it was created here
