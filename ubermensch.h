@@ -424,7 +424,60 @@ static inline void ub_interpret(List *context, const char* input_str, List* _cod
             }
             else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
             {
-                ub_push(code, (Value){.i = atol(token)});
+                switch (token[0])
+                {
+                case 0:
+                {
+                    if (token[1] == 'b')
+                    {
+                        // binary
+                        // 0b0101...
+                        // base 2
+                        ub_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
+                        break;
+                    }
+                    else if (token[1] == 'o')
+                    {
+                        // octal
+                        // 0o8732...
+                        // base 8
+                        ub_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
+                        break;
+                    }
+                    else if (token[1] == 'x')
+                    {
+                        // hex
+                        // 0xFE98...
+                        // base 16
+                        ub_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
+                        break;
+                    }
+                }
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    if (strchr(token, '.') != NULL)
+                    {
+                        // if so, we have a float here
+                        ub_push(code, (Value){.f = strtod(token, NULL)});
+                    }
+                    else
+                    {
+                        // its a regular integer
+                        ub_push(code, (Value){.i = strtol(token, NULL, 10)});
+                    }
+                    break;
+                default:
+                    break;
+                }
+                
+                
             }
             else 
             {
