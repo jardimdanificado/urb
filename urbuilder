@@ -13,14 +13,19 @@ tmp_c=$(mktemp)
 
 declare -a funcs=()
 
-# Concatena os arquivos e extrai nomes das funções
+# capture functions like:
+#   void nome ( List * stack )
+#   void nome(List* x)
+regex='void[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\([^)]*List[[:space:]]*\*?[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\)'
+
 for file in "$@"; do
     cat "$file" >> "$tmp_c"
     echo "" >> "$tmp_c"
 
-    while IFS= read -r func; do
-        funcs+=("$func")
-    done < <(grep -oP 'void\s+\K[A-Za-z_][A-Za-z0-9_]*(?=\s*\(List\*\s*stack\))' "$file" || true)
+    while IFS= read -r line; do
+        name=$(echo "$line" | sed -E 's/.*void[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/')
+        funcs+=("$name")
+    done < <(grep -Poz "$regex" "$file" | tr '\0' '\n' || true)
 done
 
 {
@@ -44,10 +49,9 @@ done
         echo "    urb_push(context, (Value){.p = $func}); \\"
     done
     echo "    ((void)0)"
-    
+    echo
     cat "$tmp_c"
     echo
-    
 } | cpp -I. -P -DURB_ENABLE_CLI=1 - > "$interpreter_c"
 
 rm -f "$tmp_c"
