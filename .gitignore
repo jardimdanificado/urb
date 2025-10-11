@@ -7,5 +7,5 @@ bruter.h
 *.urbin
 build
 
-# bruter stdlib still need to be ported to urb
-lib/std
+# bruter stdlib is bein ported to urb, but not fully yet
+# lib/std

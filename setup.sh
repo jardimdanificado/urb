@@ -1,2 +1,2 @@
 #!/bin/bash
-./urbuilder lib/example.c
+./urbuilder lib/example.c 
