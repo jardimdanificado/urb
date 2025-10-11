@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+    echo "usage: $(basename "$0") <file1.c> [file2.c ...]" >&2
+    exit 1
+fi
+
+mkdir -p build
+
+interpreter_c="build/urb.c"
+tmp_c=$(mktemp)
+
+declare -a funcs=()
+
+# Concatena os arquivos e extrai nomes das funções
+for file in "$@"; do
+    cat "$file" >> "$tmp_c"
+    echo "" >> "$tmp_c"
+
+    while IFS= read -r func; do
+        funcs+=("$func")
+    done < <(grep -oP 'void\s+\K[A-Za-z_][A-Za-z0-9_]*(?=\s*\(List\*\s*stack\))' "$file" || true)
+done
+
+{
+    echo "typedef struct List List;"
+    echo "typedef union Value Value;"
+    echo "typedef void (*Function)(List *stack);"
+    echo
+    echo "static const char *urb_function_names[] = {"
+    for func in "${funcs[@]}"; do
+        echo "    \"$func\","
+    done
+    echo "    0"
+    echo "};"
+    echo
+    for func in "${funcs[@]}"; do
+        echo "void $func(List* stack);"
+    done
+    echo
+    echo "#define INIT_URB(context) \\"
+    for func in "${funcs[@]}"; do
+        echo "    urb_push(context, (Value){.p = $func}); \\"
+    done
+    echo "    ((void)0)"
+    
+    cat "$tmp_c"
+    echo
+    
+} | cpp -I. -P -DURB_ENABLE_CLI=1 - > "$interpreter_c"
+
+rm -f "$tmp_c"
