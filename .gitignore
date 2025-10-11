@@ -1,4 +1,10 @@
 .vscode
 ub
 valgrind*
+returb
 bruter.h
+*.exe
+*.urbin
+build
+# bruter stdlib still need to be ported 
+lib

@@ -116,8 +116,10 @@ static inline void               returb_set(List *list, Int i, Value value);
 static inline const char*        returb_get_version(void);
 // arena   
 static inline void*              returb_alloc(List *arena, size_t size);
+// preprocess string into returb code
+static inline List*              returb_preprocess(char* input_str);
 // ub representation
-static inline void               returb_interpret(List *context, const char* input_str, List* code, List* stack);
+static inline void               returb_interpret(List *context, List* code, List* stack);
 
 // functions implementations
 // functions implementations
@@ -366,19 +368,148 @@ static inline void* returb_alloc(List* arena, size_t size)
 // interpreter special tokens
 #define IFGO_TOK INT_MAX - 1
 #define BANG_TOK INT_MAX - 2
+#define GET_TOK  INT_MAX - 3
 
-// not sure if this will be really included
-#define GET_TOK INT_MIN + 1
+// pseudo positions to places we not know at preprocessing
+#define CONTEXT_TOK INT_MIN + 1
+#define STACK_TOK   INT_MIN + 2
+#define CODE_TOK    INT_MIN + 3
+
+// this modify the string;
+static inline List* returb_preprocess(char* input_str)
+{
+    List* code = returb_new(RETURB_DEFAULT_SIZE);
+
+    // Duplicate the input string to avoid modifying the original
+    char* token = strtok(input_str, "\n\t \r");
+    
+    while (token != NULL)
+    {
+        // if a returb_function_names is available use it as dictionary 
+        #ifdef RETURB_FUNCTIONS_NAMES_AVAILABLE
+            Int j = 0;
+            Int found = false;
+        
+            while(returb_function_names[j] != 0)
+            {
+                if(strcmp(token, returb_function_names[j]) == 0)
+                {
+                    returb_push(code, (Value){.i = j});
+                    found = true;
+                    break;
+                }
+                j++;
+            }
+
+            if (found)
+            {
+                token = strtok(NULL, "\n\t \r");
+                continue;
+            }
+        #endif
+
+        switch (token[0])
+        {
+            // context
+            case '@':
+            {
+                returb_push(code, (Value){.i = CONTEXT_TOK});
+            }
+            break;
+            // stack
+            case '%':
+            {
+                returb_push(code, (Value){.i = STACK_TOK});
+            }
+            break;
+            // code
+            case '$':
+            {
+                returb_push(code, (Value){.i = CODE_TOK});
+            }
+            break;
+            // bang
+            case '!':
+            {
+                returb_push(code, (Value){.i = BANG_TOK});
+            }
+            break;
+            // ifgo
+            case '?':
+            {
+                returb_push(code, (Value){.i = IFGO_TOK});
+            }
+            break;
+            // get
+            case ':':
+            {
+                returb_push(code, (Value){.i = GET_TOK});
+            }
+            break;
+            case '0':
+            {
+                if (token[1] == 'b')
+                {
+                    // binary
+                    // 0b0101...
+                    // base 2
+                    returb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
+                    break;
+                }
+                else if (token[1] == 'o')
+                {
+                    // octal
+                    // 0o8732...
+                    // base 8
+                    returb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
+                    break;
+                }
+                else if (token[1] == 'x')
+                {
+                    // hex
+                    // 0xFE98...
+                    // base 16
+                    returb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
+                    break;
+                }
+            }
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                if (strchr(token, '.') != NULL)
+                {
+                    // if so, we have a float here
+                    returb_push(code, (Value){.f = strtod(token, NULL)});
+                }
+                else
+                {
+                    // its a regular integer
+                    returb_push(code, (Value){.i = strtol(token, NULL, 10)});
+                }
+                break;
+            default:
+                // we dont know wtf is this
+                // as a last effort to not skip tokens nor crash
+                // we gonna just push the pointer to this token as it is
+                returb_push(code, (Value){.p = token});
+                break;
+        }
+        token = strtok(NULL, "\n\t \r");
+    }
+    return code;
+}
 
 // if you want to return something, pass a stack, values will be there
 // if you do not provide a stack, a new one will be created and freed at the end
-static inline void returb_interpret(List *context, const char* input_str, List* _code, List* _stack)
+static inline void returb_interpret(List *context, List* code, List* _stack)
 {
-    List *code;
     List *stack;
-    Int i = 0;
-    char* original_str = NULL;
-
 
     if (_stack == NULL)
     {
@@ -389,109 +520,7 @@ static inline void returb_interpret(List *context, const char* input_str, List* 
         stack = _stack;
     }
 
-    if (_code == NULL)
-    {
-        code = returb_new(RETURB_DEFAULT_SIZE);
-    }
-    else
-    {
-        code = _code;
-    }
-
-    // no pre-processed code received
-    // so we need to do the preprocessing stuff
-    if (_code == NULL) 
-    {
-        code = returb_new(RETURB_DEFAULT_SIZE);
-
-        // Duplicate the input string to avoid modifying the original
-        original_str = strdup(input_str);
-        char* token = strtok(original_str, "\n\t \r");
-        
-        while (token != NULL)
-        {
-            if (strcmp(token, "code") == 0)
-            {
-                returb_push(code, (Value){.p = code});
-            }
-            else if (strcmp(token, "stack") == 0)
-            {
-                returb_push(code, (Value){.p = stack});
-            }
-            else if (strcmp(token, "context") == 0)
-            {
-                returb_push(code, (Value){.p = context});
-            }
-            else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
-            {
-                switch (token[0])
-                {
-                    case '0':
-                    {
-                        if (token[1] == 'b')
-                        {
-                            // binary
-                            // 0b0101...
-                            // base 2
-                            returb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
-                            break;
-                        }
-                        else if (token[1] == 'o')
-                        {
-                            // octal
-                            // 0o8732...
-                            // base 8
-                            returb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
-                            break;
-                        }
-                        else if (token[1] == 'x')
-                        {
-                            // hex
-                            // 0xFE98...
-                            // base 16
-                            returb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
-                            break;
-                        }
-                    }
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                    case '8':
-                    case '9':
-                        if (strchr(token, '.') != NULL)
-                        {
-                            // if so, we have a float here
-                            returb_push(code, (Value){.f = strtod(token, NULL)});
-                        }
-                        else
-                        {
-                            // its a regular integer
-                            returb_push(code, (Value){.i = strtol(token, NULL, 10)});
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                
-                
-            }
-            else 
-            {
-                // we dont know wtf is this
-                // lets just push the pointer to this token as it is
-                // as a last effort to not skip tokens nor crash
-                returb_push(code, (Value){.p = token});
-            }
-            token = strtok(NULL, "\n\t \r");
-            i++;
-        }
-    }
-
-    // interpreting will be here
+    // interpreting
     for (Int i = 0; i < code->size; i++)
     {
         switch(code->data[i].i)
@@ -526,17 +555,33 @@ static inline void returb_interpret(List *context, const char* input_str, List* 
                 }
             }
             break;
+            case CONTEXT_TOK:
+            {
+                returb_push(stack, (Value){.p = context});
+            }
+            break;
+            case STACK_TOK:
+            {
+                returb_push(stack, (Value){.p = stack});
+            }
+            break;
+            case CODE_TOK:
+            {
+                returb_push(stack, (Value){.p = code});
+            }
+            break;
+            default:
+            {
+                returb_push(stack, code->data[i]);
+            }
+            break;
         }
     }
 
-    // interpreting will be here
-
-    if (_code == NULL) 
-        returb_free(code); // free code only if it was created here
     if (_stack == NULL) 
+    {
         returb_free(stack); // free stack only if it was created here
-
-    free(original_str); // free the original string
+    }
 }
 
 #endif // ifndef RETURB_H macro
