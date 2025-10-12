@@ -24,8 +24,11 @@ for file in "$@"; do
 
     while IFS= read -r line; do
         name=$(echo "$line" | sed -E 's/.*void[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/')
-        funcs+=("$name")
+        # remove prefixo "urb_" apenas para registro
+        reg_name=${name#urb_}
+        funcs+=("$reg_name:$name")
     done < <(grep -Poz "$regex" "$file" | tr '\0' '\n' || true)
+
 done
 
 {
@@ -34,19 +37,22 @@ done
     echo "typedef void (*Function)(List *stack);"
     echo
     echo "static const char *urb_function_names[] = {"
-    for func in "${funcs[@]}"; do
-        echo "    \"$func\","
+    for f in "${funcs[@]}"; do
+        reg_name="${f%%:*}"
+        echo "    \"$reg_name\","
     done
     echo "    0"
     echo "};"
     echo
-    for func in "${funcs[@]}"; do
-        echo "void $func(List* stack);"
+    for f in "${funcs[@]}"; do
+        real_name="${f##*:}"
+        echo "void $real_name(List* stack);"
     done
     echo
     echo "#define INIT_URB(context) \\"
-    for func in "${funcs[@]}"; do
-        echo "    urb_push(context, (Value){.p = $func}); \\"
+    for f in "${funcs[@]}"; do
+        real_name="${f##*:}"
+        echo "    urb_push(context, (Value){.p = $real_name}); \\"
     done
     echo "    ((void)0)"
     echo

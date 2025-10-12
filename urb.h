@@ -667,7 +667,7 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     Int j = 0;
                     while(urb_function_names[j] != 0)
                     {
-                        printf("#define %s %d\n", j, urb_function_names[j]);
+                        printf("#define %s %d\n", urb_function_names[j], j);
                         j++;
                     }
                 }

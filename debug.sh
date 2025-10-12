@@ -1,6 +1,7 @@
 #!/bin/bash
-./setup.sh
-./build.sh
+./urbuilder lib/example.c lib/std/std.c lib/std/io.c
+
+gcc -o urb build/urb.c -g
 
 ./urb example/example.urb
 

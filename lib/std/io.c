@@ -1,46 +1,8 @@
-#include "bruter.h"
+#include "urb.h"
 
-void feraw_print(BruterList* stack)
+void print_string(List* stack)
 {
-    BruterMeta value = bruter_pop_meta(stack);
-    switch (value.type)
-    {
-        case BRUTER_TYPE_FLOAT:
-            printf("%f", value.value.f);
-            break;
-        case BRUTER_TYPE_BUFFER:
-            printf("%s", (char*)value.value.p);
-            break;
-        case BRUTER_TYPE_LIST:
-            for (BruterInt i = 0; i < ((BruterList*)value.value.p)->size; i++)
-            {
-                BruterMeta item = bruter_get_meta((BruterList*)value.value.p, i);
-                switch (item.type)
-                {
-                    case BRUTER_TYPE_FLOAT:
-                        printf("%f ", item.value.f);
-                        break;
-                    case BRUTER_TYPE_BUFFER:
-                        printf("%s ", (char*)item.value.p);
-                        break;
-                    case BRUTER_TYPE_LIST:
-                        printf("[List] ");
-                        break;
-                    default:
-                        printf("%ld ", item.value.i);
-                        break;
-                }
-            }
-            break;
-        default:
-            printf("%ld", value.value.i);
-            break;
-    }
-}
-
-void feraw_print_string(BruterList* stack)
-{
-    char *str = bruter_pop_pointer(stack);
+    char *str = urb_pop(stack).p;
     if (str == NULL)
     {
         printf("NULL");
@@ -49,85 +11,40 @@ void feraw_print_string(BruterList* stack)
     printf("%s", str);
 }
 
-void feraw_print_int(BruterList* stack)
+void print_int(List* stack)
 {
-    BruterInt value = bruter_pop_int(stack);
+    Int value = urb_pop(stack).i;
     printf("%ld", value);
 }
 
-void feraw_print_float(BruterList* stack)
+void print_float(List* stack)
 {
-    BruterFloat value = bruter_pop_float(stack);
+    Float value = urb_pop(stack).f;
     printf("%f", value);
 }
 
-void feraw_print_bool(BruterList* stack)
+void print_bool(List* stack)
 {
-    BruterInt value = bruter_pop_int(stack);
+    Int value = urb_pop(stack).i;
     printf(value ? "true" : "false");
 }
 
-void feraw_println(BruterList* stack)
+void println(List* stack)
 {
-    feraw_print(stack);
     printf("\n");
 }
 
-void feraw_ls(BruterList* stack)
+void ls(List* stack)
 {
     // [index, type, "name"] = value;
-    BruterList* list = bruter_pop_pointer(stack);
-    for (BruterInt i = 0; i < list->size; i++)
+    List* list = urb_pop(stack).p;
+    for (Int i = 0; i < list->size; i++)
     {
-        printf("[%ld", i);
-        if (list->types != NULL)
-        {
-            printf(", %d", list->types[i]);
-        }
-
-        if (list->keys != NULL)
-        {
-            if (list->keys[i] != NULL)
-            {
-                printf(", '%s'] = ", list->keys[i]);
-            }
-            else
-            {
-                printf("] = ");
-            }
-        }
-        else
-        {
-            printf("] = ");
-        }
-
-        if (list->types == NULL)
-        {
-            printf("%ld\n", list->data[i].i);
-            continue;
-        }
-        else 
-        {
-            switch (list->types[i])
-            {
-                case BRUTER_TYPE_FLOAT:
-                    printf("%f\n", list->data[i].f);
-                    break;
-                case BRUTER_TYPE_BUFFER:
-                    printf("%s\n", (char*)list->data[i].p);
-                    break;
-                case BRUTER_TYPE_LIST:
-                    printf("[List]\n");
-                    break;
-                default:
-                    printf("%ld\n", list->data[i].i);
-                    break;
-            }
-        }
+        printf("[%ld] = %ld\n", i);
     }
 }
 
-void feraw_scan(BruterList* stack)
+void scan(List* stack)
 {
     char buffer[1024];
     if (fgets(buffer, sizeof(buffer), stdin) != NULL)
@@ -138,10 +55,10 @@ void feraw_scan(BruterList* stack)
         {
             buffer[len - 1] = '\0';
         }
-        bruter_push_pointer(stack, strdup(buffer), NULL, BRUTER_TYPE_BUFFER);
+        urb_push(stack, (Value){.p = strdup(buffer)});
     }
     else
     {
-        bruter_push_pointer(stack, NULL, NULL, BRUTER_TYPE_BUFFER);
+        urb_push(stack, (Value){.p = NULL});
     }
 }
