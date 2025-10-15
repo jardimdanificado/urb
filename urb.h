@@ -78,6 +78,7 @@ struct List
 // List functions   
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
 static inline List*              urb_new(Int size);
+static inline List*              urb_from_pointer(void* ptr, Int size);
 // free the list    
 static inline void               urb_free(List *list);
 // double the list capacity   
@@ -145,6 +146,13 @@ static inline List *urb_new(Int size)
     list->size = 0;
     list->capacity = size;
 
+    return list;
+}
+
+static inline List *urb_from_pointer(void* ptr, Int size)
+{
+    List *list = urb_new(size);
+    memcpy(list->data, ptr, size * sizeof(Int));
     return list;
 }
 
@@ -363,43 +371,44 @@ static inline void* urb_alloc(List* arena, size_t size)
     return ptr;
 }
 
+// BASES
+#define URB_INT_MAX (INT_MAX - 128)
+#define URB_INT_MIN (INT_MIN + 128)  // INT32_MIN + 128, para segurança
+
 // SPECIAL OPCODES
-#define OP_CALL     (INT_MIN + 0)
-#define OP_GOIF     (INT_MIN + 1)
-#define OP_DROP     (INT_MIN + 2)
+#define OP_CALL       (INT_MAX -  0)
+#define OP_GOIF       (INT_MAX -  1)
+#define OP_DROP       (INT_MAX -  2)
 
 // LIST OPCODES
-#define OP_NEW      (INT_MIN + 15)
-#define OP_FREE     (INT_MIN + 16)
-#define OP_PUSH     (INT_MIN + 17)
-#define OP_POP      (INT_MIN + 18)
-#define OP_UNSHIFT  (INT_MIN + 19)
-#define OP_SHIFT    (INT_MIN + 20)
-#define OP_INSERT   (INT_MIN + 21)
-#define OP_REMOVE   (INT_MIN + 22)
-#define OP_SWAP     (INT_MIN + 23)
-#define OP_SET      (INT_MIN + 24)
-#define OP_GET      (INT_MIN + 25)
+#define OP_NEW        (INT_MAX -  3)
+#define OP_FREE       (INT_MAX -  4)
+#define OP_PUSH       (INT_MAX -  5)
+#define OP_POP        (INT_MAX -  6)
+#define OP_UNSHIFT    (INT_MAX -  7)
+#define OP_SHIFT      (INT_MAX -  8)
+#define OP_INSERT     (INT_MAX -  9)
+#define OP_REMOVE     (INT_MAX -  10)
+#define OP_SWAP       (INT_MAX -  11)
+#define OP_SET        (INT_MAX -  12)
+#define OP_GET        (INT_MAX -  13)
 
 // BASIC MATH OPCODES
-#define OP_ADD      (INT_MIN + 32)
-#define OP_SUB      (INT_MIN + 33)
-#define OP_BIT_AND  (INT_MIN + 34)
-#define OP_BIT_OR   (INT_MIN + 35)
-#define OP_BIT_XOR  (INT_MIN + 36)
-#define OP_BIT_LS   (INT_MIN + 37)
-#define OP_BIT_RS   (INT_MIN + 38)
-#define OP_BIT_NOT  (INT_MIN + 39)
+#define OP_ADD        (INT_MAX -  14)
+#define OP_SUB        (INT_MAX -  15)
+#define OP_BIT_AND    (INT_MAX -  16)
+#define OP_BIT_OR     (INT_MAX -  17)
+#define OP_BIT_XOR    (INT_MAX -  18)
+#define OP_BIT_LS     (INT_MAX -  19)
+#define OP_BIT_RS     (INT_MAX -  20)
+#define OP_BIT_NOT    (INT_MAX -  21)
 
-// ALIASS
-#define ALIAS_CONTEXT  (INT_MAX - 0)
-#define ALIAS_STACK    (INT_MAX - 1)
-#define ALIAS_CODE     (INT_MAX - 2)
-#define ALIAS_UINT     (INT_MAX - 3)
-#define ALIAS_STRING   (INT_MAX - 4)
-
-#define URB_INT_MAX INT_MAX - 128
-#define URB_INT_MIN INT_MIN + 128
+// ALIASES
+#define ALIAS_CONTEXT (INT_MAX -  22)
+#define ALIAS_STACK   (INT_MAX -  23)
+#define ALIAS_CODE    (INT_MAX -  24)
+#define ALIAS_UINT    (INT_MAX -  25)
+#define ALIAS_STRING  (INT_MAX -  26)
 
 static inline List* urb_preprocess(char* input_str)
 {
@@ -410,133 +419,30 @@ static inline List* urb_preprocess(char* input_str)
     
     while (token != NULL)
     {
-        if (strcmp(token, "context") == 0) 
+        if(token[1] == 'b')
         {
-            urb_push(code, (Value){.i = ALIAS_CONTEXT});
+            urb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
         }
-        else if (strcmp(token, "stack") == 0) 
+        else if(token[1] == 'x')
         {
-            urb_push(code, (Value){.i = ALIAS_STACK});
+            urb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
         }
-        else if (strcmp(token, "code") == 0) 
+        else if(token[1] == 'o')
         {
-            urb_push(code, (Value){.i = ALIAS_CODE});
+            urb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
         }
-        else if (strcmp(token, "call") == 0) 
+        else if(strchr(token, 'f'))
         {
-            urb_push(code, (Value){.i = OP_CALL});
+            urb_push(code, (Value){.f = strtod(token, NULL)});
         }
-        else if (strcmp(token, "goif") == 0) 
+        else if(strchr(token, 'u'))
         {
-            urb_push(code, (Value){.i = OP_GOIF});
+            urb_push(code, (Value){.i = ALIAS_UINT});
+            urb_push(code, (Value){.u = strtoul(token, NULL, 10)});
         }
-        else if (strcmp(token, "drop") == 0) 
+        else
         {
-            urb_push(code, (Value){.i = OP_DROP});
-        }
-        else if (strcmp(token, "add") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_ADD});
-        }
-        else if (strcmp(token, "sub") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_SUB});
-        }
-        else if (strcmp(token, "bit_and") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_BIT_AND});
-        }
-        else if (strcmp(token, "bit_or") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_BIT_OR});
-        }
-        else if (strcmp(token, "bit_xor") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_BIT_XOR});
-        }
-        else if (strcmp(token, "bit_ls") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_BIT_LS});
-        }
-        else if (strcmp(token, "bit_rs") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_BIT_RS});
-        }
-        else if (strcmp(token, "bit_not") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_BIT_NOT});
-        }
-        else if (strcmp(token, "new") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_NEW});
-        }
-        else if (strcmp(token, "free") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_FREE});
-        }
-        else if (strcmp(token, "push") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_PUSH});
-        }
-        else if (strcmp(token, "pop") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_POP});
-        }
-        else if (strcmp(token, "unshift") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_UNSHIFT});
-        }
-        else if (strcmp(token, "shift") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_SHIFT});
-        }
-        else if (strcmp(token, "insert") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_INSERT});
-        }
-        else if (strcmp(token, "remove") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_REMOVE});
-        }
-        else if (strcmp(token, "swap") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_SWAP});
-        }
-        else if (strcmp(token, "set") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_SET});
-        }
-        else if (strcmp(token, "get") == 0) 
-        {
-            urb_push(code, (Value){.i = OP_GET});
-        }
-        else if (token[0] >= '0' && token[0] <= '9' || (token[0] == '-' && token[1] >= '0' && token[1] <= '9'))
-        {
-            if(token[1] == 'b')
-            {
-                urb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
-            }
-            else if(token[1] == 'x')
-            {
-                urb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
-            }
-            else if(token[1] == 'o')
-            {
-                urb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
-            }
-            else if(strchr(token, 'f'))
-            {
-                urb_push(code, (Value){.f = strtod(token, NULL)});
-            }
-            else if(strchr(token, 'u'))
-            {
-                urb_push(code, (Value){.i = ALIAS_UINT});
-                urb_push(code, (Value){.u = strtoul(token, NULL, 10)});
-            }
-            else
-            {
-                urb_push(code, (Value){.u = strtol(token, NULL, 10)});
-            }
+            urb_push(code, (Value){.u = strtol(token, NULL, 10)});
         }
         token = strtok(NULL, "\n\t \r");
     }
@@ -563,7 +469,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
     {
         if(code->data[i].i >= INT_MAX - 127)
         {
-            // thats a alias
             switch(code->data[i].i)
             {
                 case ALIAS_CONTEXT:
@@ -609,18 +514,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     i += elements;
                 }
                 break;
-                default:
-                {
-                    printf("'%ld' is either a unmapped alias or a out-of-bounds integer.\n", code->data[i].i);
-                }
-                break;
-            }
-        }
-        else if (code->data[i].i <= INT_MIN + 127)
-        {
-            // thats a operator
-            switch(code->data[i].i)
-            {
                 case OP_GOIF:
                 {
                     if (urb_pop(stack).i)

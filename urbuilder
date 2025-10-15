@@ -9,11 +9,12 @@ fi
 mkdir -p build
 
 interpreter_c="build/urb.c"
+urb_names_h="build/dictionary.h"
 tmp_c=$(mktemp)
 
 declare -a funcs=()
 
-# capture functions like:
+# captura funções como:
 #   void nome ( List * stack )
 #   void nome(List* x)
 regex='void[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\([^)]*List[[:space:]]*\*?[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\)'
@@ -28,21 +29,13 @@ for file in "$@"; do
         reg_name=${name#urb_}
         funcs+=("$reg_name:$name")
     done < <(grep -Poz "$regex" "$file" | tr '\0' '\n' || true)
-
 done
 
+# gera urb.c
 {
     echo "typedef struct List List;"
     echo "typedef union Value Value;"
     echo "typedef void (*Function)(List *stack);"
-    echo
-    echo "static const char *urb_function_names[] = {"
-    for f in "${funcs[@]}"; do
-        reg_name="${f%%:*}"
-        echo "    \"$reg_name\","
-    done
-    echo "    0"
-    echo "};"
     echo
     for f in "${funcs[@]}"; do
         real_name="${f##*:}"
@@ -59,5 +52,23 @@ done
     cat "$tmp_c"
     echo
 } > "$interpreter_c"
+
+# gera urb_names.h com opcodes.h no início
+{
+    # concatena opcodes.h
+    [ -f ./opcodes.h ] && cat ./opcodes.h
+    echo
+    echo "#ifndef URB_NAMES_H"
+    echo "#define URB_NAMES_H"
+    echo
+    index=0
+    for f in "${funcs[@]}"; do
+        reg_name="${f%%:*}"
+        echo "#define $reg_name $index"
+        index=$((index + 1))
+    done
+    echo
+    echo "#endif // URB_NAMES_H"
+} > "$urb_names_h"
 
 rm -f "$tmp_c"

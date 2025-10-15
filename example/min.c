@@ -1,5 +1,6 @@
 #include "urb.h"
 #include "../build/urb.c"
+#include "../build/dictionary.h"
 int main()
 {
     List *context = urb_new(URB_DEFAULT_SIZE);

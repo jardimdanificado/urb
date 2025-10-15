@@ -2,6 +2,7 @@
 ub
 valgrind*
 urb
+urbc
 bruter.h
 *.exe
 *.urbin

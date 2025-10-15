@@ -1,1 +1,3 @@
-123 0 context get call
+#include "../build/dictionary.h"
+
+123 test_func CONTEXT GET CALL
