@@ -1,2 +1,1 @@
-0123456789 test_func : !
-123 print_int : ! println : !
+123 0 context get call

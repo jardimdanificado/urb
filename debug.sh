@@ -1,7 +1,7 @@
 #!/bin/bash
-./urbuilder lib/example.c lib/std/std.c lib/std/io.c
+./urbuilder lib/example.c
 
-gcc -o urb build/urb.c -g
+gcc -o urb cli.c -g -I. -Ibuild
 
 ./urb example/example.urb
 

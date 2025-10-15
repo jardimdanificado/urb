@@ -56,8 +56,8 @@ union Value
 {
     // all types depend on the size of the pointer
     Int i;
-    Float f;
     UInt u;
+    Float f;
     void* p;
     uint8_t b[sizeof(void*)];
     // in C99 you cant cast a function pointer from a void*, 
@@ -229,7 +229,7 @@ static inline void urb_insert(List *list, Int i, Value value)
 
 static inline Value urb_pop(List *list)
 {
-    Value ret = list->data[list->size - 1]; 
+    Value ret = list->data[list->size - 1];
     if (list->size == 0)
     {
         printf("URB_ERROR: cannot pop from empty list\n");
@@ -363,17 +363,44 @@ static inline void* urb_alloc(List* arena, size_t size)
     return ptr;
 }
 
-// interpreter special tokens
-#define IFGO_TOK INT_MAX - 1
-#define BANG_TOK INT_MAX - 2
-#define GET_TOK  INT_MAX - 3
+// SPECIAL OPCODES
+#define OP_CALL     (INT_MIN + 0)
+#define OP_GOIF     (INT_MIN + 1)
+#define OP_DROP     (INT_MIN + 2)
 
-// pseudo positions to places we not know at preprocessing
-#define CONTEXT_TOK INT_MIN + 1
-#define STACK_TOK   INT_MIN + 2
-#define CODE_TOK    INT_MIN + 3
+// LIST OPCODES
+#define OP_NEW      (INT_MIN + 15)
+#define OP_FREE     (INT_MIN + 16)
+#define OP_PUSH     (INT_MIN + 17)
+#define OP_POP      (INT_MIN + 18)
+#define OP_UNSHIFT  (INT_MIN + 19)
+#define OP_SHIFT    (INT_MIN + 20)
+#define OP_INSERT   (INT_MIN + 21)
+#define OP_REMOVE   (INT_MIN + 22)
+#define OP_SWAP     (INT_MIN + 23)
+#define OP_SET      (INT_MIN + 24)
+#define OP_GET      (INT_MIN + 25)
 
-// this modify the string;
+// BASIC MATH OPCODES
+#define OP_ADD      (INT_MIN + 32)
+#define OP_SUB      (INT_MIN + 33)
+#define OP_BIT_AND  (INT_MIN + 34)
+#define OP_BIT_OR   (INT_MIN + 35)
+#define OP_BIT_XOR  (INT_MIN + 36)
+#define OP_BIT_LS   (INT_MIN + 37)
+#define OP_BIT_RS   (INT_MIN + 38)
+#define OP_BIT_NOT  (INT_MIN + 39)
+
+// ALIASS
+#define ALIAS_CONTEXT  (INT_MAX - 0)
+#define ALIAS_STACK    (INT_MAX - 1)
+#define ALIAS_CODE     (INT_MAX - 2)
+#define ALIAS_UINT     (INT_MAX - 3)
+#define ALIAS_STRING   (INT_MAX - 4)
+
+#define URB_INT_MAX INT_MAX - 128
+#define URB_INT_MIN INT_MIN + 128
+
 static inline List* urb_preprocess(char* input_str)
 {
     List* code = urb_new(URB_DEFAULT_SIZE);
@@ -383,123 +410,133 @@ static inline List* urb_preprocess(char* input_str)
     
     while (token != NULL)
     {
-        // defining URB_FUNCTIONS_NAMES_NOT_AVAILABLE can boost performance of preprocessing
-        // but also require one to turn all function names into their proper index
-        // if so try calling "./urb macros" on the cli tool can help u
-        // URB_FUNCTIONS_NAMES_NOT_AVAILABLE is very useful for realtime preprocessing
-        #ifndef URB_FUNCTIONS_NAMES_NOT_AVAILABLE
-            Int j = 0;
-            Int found = false;
-        
-            while(urb_function_names[j] != 0)
-            {
-                if(strcmp(token, urb_function_names[j]) == 0)
-                {
-                    urb_push(code, (Value){.i = j});
-                    found = true;
-                    break;
-                }
-                j++;
-            }
-
-            if (found)
-            {
-                token = strtok(NULL, "\n\t \r");
-                continue;
-            }
-        #endif
-
-        switch (token[0])
+        if (strcmp(token, "context") == 0) 
         {
-            // context
-            case '@':
+            urb_push(code, (Value){.i = ALIAS_CONTEXT});
+        }
+        else if (strcmp(token, "stack") == 0) 
+        {
+            urb_push(code, (Value){.i = ALIAS_STACK});
+        }
+        else if (strcmp(token, "code") == 0) 
+        {
+            urb_push(code, (Value){.i = ALIAS_CODE});
+        }
+        else if (strcmp(token, "call") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_CALL});
+        }
+        else if (strcmp(token, "goif") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_GOIF});
+        }
+        else if (strcmp(token, "drop") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_DROP});
+        }
+        else if (strcmp(token, "add") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_ADD});
+        }
+        else if (strcmp(token, "sub") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_SUB});
+        }
+        else if (strcmp(token, "bit_and") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_BIT_AND});
+        }
+        else if (strcmp(token, "bit_or") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_BIT_OR});
+        }
+        else if (strcmp(token, "bit_xor") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_BIT_XOR});
+        }
+        else if (strcmp(token, "bit_ls") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_BIT_LS});
+        }
+        else if (strcmp(token, "bit_rs") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_BIT_RS});
+        }
+        else if (strcmp(token, "bit_not") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_BIT_NOT});
+        }
+        else if (strcmp(token, "new") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_NEW});
+        }
+        else if (strcmp(token, "free") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_FREE});
+        }
+        else if (strcmp(token, "push") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_PUSH});
+        }
+        else if (strcmp(token, "pop") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_POP});
+        }
+        else if (strcmp(token, "unshift") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_UNSHIFT});
+        }
+        else if (strcmp(token, "shift") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_SHIFT});
+        }
+        else if (strcmp(token, "insert") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_INSERT});
+        }
+        else if (strcmp(token, "remove") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_REMOVE});
+        }
+        else if (strcmp(token, "swap") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_SWAP});
+        }
+        else if (strcmp(token, "set") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_SET});
+        }
+        else if (strcmp(token, "get") == 0) 
+        {
+            urb_push(code, (Value){.i = OP_GET});
+        }
+        else if (token[0] >= '0' && token[0] <= '9' || (token[0] == '-' && token[1] >= '0' && token[1] <= '9'))
+        {
+            if(token[1] == 'b')
             {
-                urb_push(code, (Value){.i = CONTEXT_TOK});
+                urb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
             }
-            break;
-            // stack
-            case '%':
+            else if(token[1] == 'x')
             {
-                urb_push(code, (Value){.i = STACK_TOK});
+                urb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
             }
-            break;
-            // code
-            case '$':
+            else if(token[1] == 'o')
             {
-                urb_push(code, (Value){.i = CODE_TOK});
+                urb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
             }
-            break;
-            // bang
-            case '!':
+            else if(strchr(token, 'f'))
             {
-                urb_push(code, (Value){.i = BANG_TOK});
+                urb_push(code, (Value){.f = strtod(token, NULL)});
             }
-            break;
-            // ifgo
-            case '?':
+            else if(strchr(token, 'u'))
             {
-                urb_push(code, (Value){.i = IFGO_TOK});
+                urb_push(code, (Value){.i = ALIAS_UINT});
+                urb_push(code, (Value){.u = strtoul(token, NULL, 10)});
             }
-            break;
-            // get
-            case ':':
+            else
             {
-                urb_push(code, (Value){.i = GET_TOK});
+                urb_push(code, (Value){.u = strtol(token, NULL, 10)});
             }
-            break;
-            case '0':
-            {
-                if (token[1] == 'b')
-                {
-                    // binary
-                    // 0b0101...
-                    // base 2
-                    urb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
-                    break;
-                }
-                else if (token[1] == 'o')
-                {
-                    // octal
-                    // 0o8732...
-                    // base 8
-                    urb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
-                    break;
-                }
-                else if (token[1] == 'x')
-                {
-                    // hex
-                    // 0xFE98...
-                    // base 16
-                    urb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
-                    break;
-                }
-            }
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                if (strchr(token, '.') != NULL)
-                {
-                    // if so, we have a float here
-                    urb_push(code, (Value){.f = strtod(token, NULL)});
-                }
-                else
-                {
-                    // its a regular integer
-                    urb_push(code, (Value){.i = strtol(token, NULL, 10)});
-                }
-                break;
-            default:
-                // we dont know wtf is this
-                // as a last effort to not skip tokens nor crash
-                // we gonna just push the pointer to this token as it is
-                urb_push(code, (Value){.p = token});
-                break;
         }
         token = strtok(NULL, "\n\t \r");
     }
@@ -524,58 +561,198 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
     // interpreting
     for (Int i = 0; i < code->size; i++)
     {
-        switch(code->data[i].i)
+        if(code->data[i].i >= INT_MAX - 127)
         {
-            case GET_TOK:
+            // thats a alias
+            switch(code->data[i].i)
             {
-                Int index_toget = urb_pop(stack).i;
-                if (index_toget < context->capacity)
+                case ALIAS_CONTEXT:
                 {
-                    urb_push(stack, context->data[index_toget]);
+                    urb_push(stack, (Value){.p = context});
                 }
-                else
+                break;
+                case ALIAS_STACK:
                 {
-                    printf("cannot get variable %ld, curretly context capacity is %ls\n", index_toget, context->capacity);
+                    urb_push(stack, (Value){.p = stack});
                 }
-            }
-            break;
-            case BANG_TOK:
-            {
-                // in C99 you cant cast a function pointer from a void*
-                Function bang_func = urb_pop(stack).fn;
-                bang_func(stack);
-            }
-            break;
-            case IFGO_TOK:
-            {
-                bool cond = urb_pop(stack).i;
-                Int position = urb_pop(stack).i;
-                if (cond)
+                break;
+                case ALIAS_CODE:
                 {
-                    i = position;
+                    urb_push(stack, (Value){.p = code});
                 }
+                break;
+                case ALIAS_UINT:
+                {
+                    // next value will be interpreted as unsigned integer 
+                    urb_push(stack, (Value){.u = code->data[i + 1].u});
+
+                    // we must skip the next token as we already processed it
+                    i++;
+                }
+                break;
+                case ALIAS_STRING:
+                {
+                    void* str = &(code->data[0].i);
+                    Int elements = strlen(str);
+                    while (elements % 8 != 0)
+                    {
+                        elements++;
+                    }
+                    elements = elements/8;
+
+                    List *list = urb_new(URB_DEFAULT_SIZE);
+                    for (Int j = 0; j < elements; j++)
+                    {
+                        urb_push(list, code->data[i + j]);
+                    }
+                    urb_push(stack, (Value){.p = list});
+                    i += elements;
+                }
+                break;
+                default:
+                {
+                    printf("'%ld' is either a unmapped alias or a out-of-bounds integer.\n", code->data[i].i);
+                }
+                break;
             }
-            break;
-            case CONTEXT_TOK:
+        }
+        else if (code->data[i].i <= INT_MIN + 127)
+        {
+            // thats a operator
+            switch(code->data[i].i)
             {
-                urb_push(stack, (Value){.p = context});
+                case OP_GOIF:
+                {
+                    if (urb_pop(stack).i)
+                    {
+                        i = urb_pop(stack).i;
+                    }
+                }
+                break;
+
+                case OP_CALL:
+                {
+                    // in C99 you cant cast a function pointer from a void*
+                    urb_pop(stack).fn(stack);
+                }
+                break;
+
+                // list operators
+                case OP_NEW:
+                {
+                    urb_push(stack, (Value){.p = urb_new(URB_DEFAULT_SIZE)});
+                }
+                break;
+
+                case OP_FREE:
+                {
+                    urb_free(urb_pop(stack).p);
+                }
+                break;
+
+                case OP_PUSH:
+                {
+                    urb_push(urb_pop(stack).p, urb_pop(stack));
+                }
+                break;
+
+                case OP_POP:
+                {
+                    urb_push(stack, urb_pop(urb_pop(stack).p));
+                }
+                break;
+
+                case OP_UNSHIFT:
+                {
+                    urb_unshift(urb_pop(stack).p, urb_pop(stack));
+                }
+                break;
+
+                case OP_SHIFT:
+                {
+                    urb_push(stack, urb_shift(urb_pop(stack).p));
+                }
+                break;
+
+                case OP_INSERT:
+                {
+                    urb_insert(urb_pop(stack).p, urb_pop(stack).i, urb_pop(stack));
+                }
+                break;
+
+                case OP_REMOVE:
+                {
+                    urb_push(stack, urb_remove(urb_pop(stack).p, urb_pop(stack).i));
+                }
+                break;
+
+                case OP_SWAP:
+                {
+                    urb_swap(urb_pop(stack).p, urb_pop(stack).i, urb_pop(stack).i);
+                }
+                break;
+
+                case OP_SET:
+                {
+                    urb_set(urb_pop(stack).p, urb_pop(stack).i, urb_pop(stack));
+                }
+                break;
+
+                case OP_GET:
+                {
+                    List* list = urb_pop(stack).p;
+                    Int index = urb_pop(stack).i;
+                    urb_push(stack, urb_get(list, index));
+                }
+                break;
+
+                // basic math operators
+                case OP_BIT_AND:
+                {
+                    urb_push(stack, (Value){.i = urb_pop(stack).i & urb_pop(stack).i});
+                }
+                break;
+
+                case OP_BIT_OR:
+                {
+                    urb_push(stack, (Value){.i = urb_pop(stack).i | urb_pop(stack).i});
+                }
+                break;
+
+                case OP_BIT_XOR:
+                {
+                    urb_push(stack, (Value){.i = urb_pop(stack).i ^ urb_pop(stack).i});
+                }
+                break;
+
+                case OP_BIT_LS:
+                {
+                    urb_push(stack, (Value){.i = urb_pop(stack).i << urb_pop(stack).i});
+                }
+                break;
+
+                case OP_BIT_RS:
+                {
+                    urb_push(stack, (Value){.i = urb_pop(stack).i >> urb_pop(stack).i});
+                }
+                break;
+
+                case OP_BIT_NOT:
+                {
+                    urb_push(stack, (Value){.i = ~urb_pop(stack).i});
+                }
+                break;
+
+                default:
+                {
+                    printf("'%ld' is either a unmapped opcode or a out-of-bounds integer.\n", code->data[i].i);
+                }
+                break;
             }
-            break;
-            case STACK_TOK:
-            {
-                urb_push(stack, (Value){.p = stack});
-            }
-            break;
-            case CODE_TOK:
-            {
-                urb_push(stack, (Value){.p = code});
-            }
-            break;
-            default:
-            {
-                urb_push(stack, code->data[i]);
-            }
-            break;
+        }
+        else 
+        {
+            urb_push(stack, code->data[i]);
         }
     }
 
@@ -586,180 +763,3 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
 }
 
 #endif // ifndef URB_H macro
-
-
-// CLI Tool
-// this used to be a file apart
-// but lets try put it here
-#ifdef URB_ENABLE_CLI
-    #ifndef URB_CLI_ENABLED
-        #define URB_CLI_ENABLED 1
-
-        const char* urb_help_message = 
-        "urb v" URB_VERSION "\n"
-        "usage:\n"
-        "    urb [option / filename]\n"
-        "options:\n"
-        "    urb help\n"
-        "    urb version\n"
-        "    urb dictionary\n"
-        "    urb functions\n"
-        "    urb version\n"
-        "compile:\n"
-        "    urb filename.urb\n"
-        "interpret:\n"
-        "    urb filename.urbin\n";
-
-        // this is slow af
-        char* slow_file_read(char *filename)
-        {
-            FILE *file = fopen(filename, "r");
-            if (file == NULL)
-            {
-                return NULL;
-            }
-
-            char *code = (char*)malloc(1);
-            if (code == NULL)
-            {
-                printf("ERROR: could not allocate memory for file\n");
-                fclose(file);
-                return NULL;
-            }
-
-            code[0] = '\0';
-
-            char *line = NULL;
-            size_t len = 0;
-            while (getline(&line, &len, file) != -1)
-            {
-                size_t new_size = strlen(code) + strlen(line) + 1;
-                char *temp = realloc(code, new_size);
-                if (temp == NULL)
-                {
-                    printf("ERROR: could not reallocate memory while reading file\n");
-                    free(code);
-                    free(line);
-                    fclose(file);
-                    return NULL;
-                }
-                code = temp;
-                strcat(code, line);
-            }
-
-            free(line);
-            fclose(file);
-            return code;
-        }
-
-        int main(int argc, char* argv[])
-        {
-            char *output_name = NULL;
-            if (argc <= 1)
-            {
-                printf(urb_help_message);
-                return 1;
-            }
-            else if (argc >= 2)
-            {
-                if (strcmp(argv[1], "dictionary") == 0)
-                {
-                    Int j = 0;
-                    while(urb_function_names[j] != 0)
-                    {
-                        printf("#define %s %d\n", urb_function_names[j], j);
-                        j++;
-                    }
-                }
-                else if (strcmp(argv[1], "functions") == 0)
-                {
-                    Int j = 0;
-                    while(urb_function_names[j] != 0)
-                    {
-                        printf("context[%d] = %s;\n", j, urb_function_names[j]);
-                        j++;
-                    }
-                }
-                else if (strcmp(argv[1], "version") == 0)
-                {
-                    printf("urb v%s\n", URB_VERSION);
-                }
-                else if (strcmp(argv[1], "help") == 0)
-                {
-                    printf(urb_help_message);
-                    return 1;
-                }
-                // a binary been passed, lets run it then
-                else if(strstr(argv[1], ".urbin") != NULL)
-                {
-                    // header[0] = capacity
-                    // header[1] = size
-                    Half header[2];
-
-                    List* code;
-                    List* context = urb_new(URB_DEFAULT_SIZE);
-                    FILE *file = fopen(argv[1], "rb");
-
-                    INIT_URB(context);
-                    
-                    if (fread(header, sizeof(Half), 2, file) != 2)
-                    {
-                        fprintf(stderr, "error: this file is smaller than a urb header\n");
-                        return 1;
-                    };
-                    
-                    code = urb_new(header[0]);
-                    code->size = header[1];
-
-                    // we read *size* elements
-                    if (fread(code->data, sizeof(Int), code->size, file) != code->size)
-                    {
-                        // if we have a header claiming it has more elements -
-                        // - than it does, then the file is corrupted
-                        // or was not generated properly
-                        // or is not a urb binary
-                        fprintf(stderr, "error: this file is probably corrupted\n");
-                        return 1;
-                    }
-                    
-                    fclose(file);
-
-                    urb_interpret(context, code, NULL);
-
-                    urb_free(context);
-                    urb_free(code);
-                }
-                else
-                {
-                    // not .urbin
-                    // we treat everything else as a .urb source
-                    // so lets compile it then
-                    output_name = malloc(strlen(argv[1]) + 3);
-                    strcat(output_name, argv[1]);
-                    strcat(output_name, "in");
-
-                    char* file_content = slow_file_read(argv[1]);
-                    List* compiled = urb_preprocess(file_content);
-                    char* binary = malloc(sizeof(Int) * (compiled->size + 1));
-                    
-                    // we copy the metadata(.size and .capacity)
-                    memcpy(binary, compiled, sizeof(Int));
-                    
-                    // we copy the content(.data)
-                    memcpy(binary + sizeof(Int), compiled->data, compiled->size * sizeof(Int));
-
-                    FILE *file = fopen(output_name, "wb");
-                    if (file == NULL)
-                    {
-                        return 1;
-                    }
-                    
-                    fwrite(binary, 1, sizeof(Int) * (compiled->size + 1), file);
-                    fclose(file);
-
-                    free(output_name);
-                }
-            }
-        };
-    #endif
-#endif
