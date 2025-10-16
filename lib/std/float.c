@@ -1,64 +1,64 @@
 #include "urb.h"
 #include "math.h"
 
-void feq(List* stack)
+void urb_feq(List* stack)
 {
     Int a = urb_pop(stack).f;
     Int b = urb_pop(stack).f;
     urb_push(stack, (Value){.f = a == b ? 1 : 0});
 }
 
-void fneq(List* stack)
+void urb_fneq(List* stack)
 {
     Int a = urb_pop(stack).f;
     Int b = urb_pop(stack).f;
     urb_push(stack, (Value){.f = a != b ? 1 : 0});
 }
 
-void fgt(List* stack)
+void urb_fgt(List* stack)
 {
     Int a = urb_pop(stack).f;
     Int b = urb_pop(stack).f;
     urb_push(stack, (Value){.f = a > b ? 1 : 0});
 }
 
-void fge(List* stack)
+void urb_fge(List* stack)
 {
     Int a = urb_pop(stack).f;
     Int b = urb_pop(stack).f;
     urb_push(stack, (Value){.f = a >= b ? 1 : 0});
 }
 
-void flt(List* stack)
+void urb_flt(List* stack)
 {
     Int a = urb_pop(stack).f;
     Int b = urb_pop(stack).f;
     urb_push(stack, (Value){.f = a < b ? 1 : 0});
 }
 
-void fle(List* stack)
+void urb_fle(List* stack)
 {
     Int a = urb_pop(stack).f;
     Int b = urb_pop(stack).f;
     urb_push(stack, (Value){.f = a <= b ? 1 : 0});
 }
 
-void fadd(List *stack)
+void urb_fadd(List *stack)
 {
     urb_push(stack, (Value){.f = (urb_pop(stack).f + urb_pop(stack).f)});
 }
 
-void fsub(List *stack)
+void urb_fsub(List *stack)
 {
     urb_push(stack, (Value){.f = (urb_pop(stack).f - urb_pop(stack).f)});
 }
 
-void fmul(List *stack)
+void urb_fmul(List *stack)
 {
     urb_push(stack, (Value){.f = (urb_pop(stack).f * urb_pop(stack).f)});
 }
 
-void fdiv(List *stack)
+void urb_fdiv(List *stack)
 {
     urb_push(stack, (Value){.f = (urb_pop(stack).f / urb_pop(stack).f)});
 }

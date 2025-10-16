@@ -1,2 +1,2 @@
 #!/bin/bash
-cpp examples/example.urb -E -P | ./urbc
+cpp $1 -E -P | ./urbc

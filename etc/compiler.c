@@ -6,14 +6,14 @@
 int main()
 {
     List* compiled = urb_new(URB_DEFAULT_SIZE);
-    
+
     char word[128];
 
     // we dont use urb_preprocess directly
     // bcause we want to take advantage of -
     // - scanf performance and some bash features
     // loading a file would require we to define a static buffer
-    // or using a slow "realloc-hell" file loader, like it always used to be
+    // or using a slow "realloc-hell" file loader, like it used to be
     while (scanf("%127s", word) == 1) 
     {
         urb_push(compiled, urb_token_preprocess(word));
