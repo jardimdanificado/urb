@@ -1,11 +1,13 @@
 #!/bin/bash
-./urbuilder lib/example.c
+./scripts/gen_urb_c.sh lib/example.c
+./scripts/gen_dictionary.sh lib/example.c
 
-gcc -o urbc compiler.c -g -I. -Ibuild
-gcc -o urb interpreter.c -g -I. -Ibuild
+gcc -o urbc etc/compiler.c -g -I. -Ibuild
+gcc -o urb etc/interpreter.c -g -I. -Ibuild
 
-cpp example/example.urb -E -P > build/example.urb
-./urbc build/example.urb
+#urbc=./urbc ./urbpp.sh > build/example.urbin
+cpp examples/example.urb -E -P > build/example.urb
+./urbc build/example.urb > build/example.urbin
 
 valgrind \
           --leak-check=full \

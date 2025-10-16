@@ -373,7 +373,7 @@ static inline void* urb_alloc(List* arena, size_t size)
 
 // BASES
 #define URB_INT_MAX (INT_MAX - 128)
-#define URB_INT_MIN (INT_MIN + 128)  // INT32_MIN + 128, para segurança
+#define URB_INT_MIN (INT_MIN + 128)
 
 // SPECIAL OPCODES
 #define OP_CALL       (INT_MAX -  0)
@@ -402,6 +402,11 @@ static inline void* urb_alloc(List* arena, size_t size)
 #define OP_BIT_LS     (INT_MAX -  19)
 #define OP_BIT_RS     (INT_MAX -  20)
 #define OP_BIT_NOT    (INT_MAX -  21)
+
+// COMPARE OPCODES
+#define OP_EQUALS     (INT_MAX -  22)
+#define OP_NOT_EQUALS (INT_MAX -  23)
+#define OP_BIGGER     (INT_MAX -  24)
 
 // ALIASES
 #define ALIAS_CONTEXT (INT_MAX -  22)
