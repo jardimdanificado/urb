@@ -3,52 +3,22 @@
 // usually found at build/urb.c
 #include "urb.c"
 
-// this is slow af
-char* slow_file_read(char *filename)
+int main()
 {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL)
+    List* compiled = urb_new(URB_DEFAULT_SIZE);
+    
+    char word[128];
+
+    // we dont use urb_preprocess directly
+    // bcause we want to take advantage of -
+    // - scanf performance and some bash features
+    // loading a file would require we to define a static buffer
+    // or using a slow "realloc-hell" file loader, like it always used to be
+    while (scanf("%127s", word) == 1) 
     {
-        return NULL;
+        urb_push(compiled, urb_token_preprocess(word));
     }
-
-    char *code = (char*)malloc(1);
-    if (code == NULL)
-    {
-        printf("ERROR: could not allocate memory for file\n");
-        fclose(file);
-        return NULL;
-    }
-
-    code[0] = '\0';
-
-    char *line = NULL;
-    size_t len = 0;
-    while (getline(&line, &len, file) != -1)
-    {
-        size_t new_size = strlen(code) + strlen(line) + 1;
-        char *temp = realloc(code, new_size);
-        if (temp == NULL)
-        {
-            printf("ERROR: could not reallocate memory while reading file\n");
-            free(code);
-            free(line);
-            fclose(file);
-            return NULL;
-        }
-        code = temp;
-        strcat(code, line);
-    }
-
-    free(line);
-    fclose(file);
-    return code;
-}
-
-int main(int argc, char* argv[])
-{
-    char* file_content = slow_file_read(argv[1]);
-    List* compiled = urb_preprocess(file_content);
+    
     char* binary = malloc(sizeof(Int) * (compiled->size + 1));
     
     // we copy the metadata(.size and .capacity)

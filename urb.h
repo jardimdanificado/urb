@@ -403,7 +403,7 @@ static inline void* urb_alloc(List* arena, size_t size)
 #define OP_BIT_RS     (INT_MAX -  20)
 #define OP_BIT_NOT    (INT_MAX -  21)
 
-// COMPARE OPCODES
+// CMP OPCODES
 #define OP_EQUALS     (INT_MAX -  22)
 #define OP_NOT_EQUALS (INT_MAX -  23)
 #define OP_BIGGER     (INT_MAX -  24)
@@ -415,6 +415,35 @@ static inline void* urb_alloc(List* arena, size_t size)
 #define ALIAS_UINT    (INT_MAX -  25)
 #define ALIAS_STRING  (INT_MAX -  26)
 
+static inline Value urb_token_preprocess(char* token)
+{
+    if(token[1] == 'b')
+    {
+        return((Value){.i = strtol(token + 2, NULL, 2)});
+    }
+    else if(token[1] == 'x')
+    {
+        return((Value){.i = strtol(token + 2, NULL, 16)});
+    }
+    else if(token[1] == 'o')
+    {
+        return((Value){.i = strtol(token + 2, NULL, 8)});
+    }
+    else if(strchr(token, 'f'))
+    {
+        return((Value){.f = strtod(token, NULL)});
+    }
+    else if(strchr(token, 'u'))
+    {
+        return((Value){.i = ALIAS_UINT});
+        return((Value){.u = strtoul(token, NULL, 10)});
+    }
+    else
+    {
+        return((Value){.u = strtol(token, NULL, 10)});
+    }
+}
+
 static inline List* urb_preprocess(char* input_str)
 {
     List* code = urb_new(URB_DEFAULT_SIZE);
@@ -424,31 +453,7 @@ static inline List* urb_preprocess(char* input_str)
     
     while (token != NULL)
     {
-        if(token[1] == 'b')
-        {
-            urb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
-        }
-        else if(token[1] == 'x')
-        {
-            urb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
-        }
-        else if(token[1] == 'o')
-        {
-            urb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
-        }
-        else if(strchr(token, 'f'))
-        {
-            urb_push(code, (Value){.f = strtod(token, NULL)});
-        }
-        else if(strchr(token, 'u'))
-        {
-            urb_push(code, (Value){.i = ALIAS_UINT});
-            urb_push(code, (Value){.u = strtoul(token, NULL, 10)});
-        }
-        else
-        {
-            urb_push(code, (Value){.u = strtol(token, NULL, 10)});
-        }
+        urb_push(code, urb_token_preprocess(token));
         token = strtok(NULL, "\n\t \r");
     }
     return code;

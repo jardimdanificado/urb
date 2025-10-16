@@ -5,10 +5,9 @@
 gcc -o urbc etc/compiler.c -g -I. -Ibuild
 gcc -o urb etc/interpreter.c -g -I. -Ibuild
 
-#urbc=./urbc ./urbpp.sh > build/example.urbin
-cpp examples/example.urb -E -P > build/example.urb
-./urbc build/example.urb > build/example.urbin
-
+{
+    urbc=./urbc ./scripts/urbpp.sh 
+} > build/example.urbin
 valgrind \
           --leak-check=full \
           --show-leak-kinds=all \

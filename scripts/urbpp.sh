@@ -1,2 +1,2 @@
 #!/bin/bash
-cpp examples/example.urb -E -P > urbc
+cpp examples/example.urb -E -P | ./urbc
