@@ -380,6 +380,8 @@ static inline void* urb_alloc(List* arena, size_t size)
 #define URB_INT_MAX (INT_MAX - 128)
 #define URB_INT_MIN (INT_MIN + 128)
 
+// if adding new opcodes and using the experimental debug system
+// be sure to register the opcodes in scripts/opcodes.h too
 enum {
     // special opcodes
     OP_CALL = INT_MAX - 127,
@@ -401,6 +403,8 @@ enum {
     OP_DROP,
     OP_COPY,
     OP_LENGTH,
+    OP_DOUBLE,
+    OP_HALF,
 
     // math opcodes
     OP_ADD,
@@ -420,12 +424,18 @@ enum {
     OP_AND,
     OP_OR,
 
+    // buffer opcodes
+    OP_WRITE,
+    OP_READ,
+    OP_RESIZE,
+
     // alias
     ALIAS_CONTEXT,
     ALIAS_STACK,
     ALIAS_CODE,
-    ALIAS_UINT,
-    ALIAS_STRING
+    ALIAS_BYPASS,
+    ALIAS_STRING,
+    ALIAS_WORD_SIZE
 };
 
 static inline Value urb_token_preprocess(char* token)
@@ -448,7 +458,7 @@ static inline Value urb_token_preprocess(char* token)
     }
     else if(strchr(token, 'u'))
     {
-        return((Value){.i = ALIAS_UINT});
+        return((Value){.i = ALIAS_BYPASS});
         return((Value){.u = strtoul(token, NULL, 10)});
     }
     else
@@ -588,6 +598,16 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = ((List*)urb_pop(stack).p)->size});
                 }
                 break;
+                case OP_DOUBLE:
+                {
+                    urb_double((List*)urb_pop(stack).p);
+                }
+                break;
+                case OP_HALF:
+                {
+                    urb_half((List*)urb_pop(stack).p);
+                }
+                break;
 
                 // basic math operators
                 case OP_BIT_AND:
@@ -653,6 +673,38 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = urb_pop(stack).i || urb_pop(stack).i});
                 }
                 break;
+
+                // byte operators
+                case OP_WRITE:
+                {
+                    List* list = urb_pop(stack).p;
+                    Int index = urb_pop(stack).i;
+                    Int value = urb_pop(stack).i;
+                    uint8_t* buffer_data = (uint8_t*)list->data;
+                    buffer_data[index] = value;
+                }
+                break;
+                case OP_READ:
+                {
+                    List* list = urb_pop(stack).p;
+                    Int index = urb_pop(stack).i;
+                    uint8_t* buffer_data = (uint8_t*)list->data;
+                    urb_push(stack, (Value){.i = buffer_data[index]});
+                }
+                break;
+                case OP_RESIZE:
+                {
+                    List* list = urb_pop(stack).p;
+                    Int new_capacity = urb_pop(stack).i;
+                    while((new_capacity % sizeof(Int)) != 0)
+                    {
+                        new_capacity++;
+                    }
+                    list->data = realloc(list->data, new_capacity/sizeof(Int));
+                    list->capacity = new_capacity;
+                    list->size = (list->size > list->capacity) ? list->capacity : list->size;
+                }
+                break;
                 
                 // aliases
                 case ALIAS_CONTEXT:
@@ -660,7 +712,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.p = context});
                 }
                 break;
-
                 case ALIAS_STACK:
                 {
                     urb_push(stack, (Value){.p = stack});
@@ -671,12 +722,12 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.p = code});
                 }
                 break;
-                case ALIAS_UINT:
+                case ALIAS_BYPASS:
                 {
-                    // next value will be interpreted as unsigned integer 
-                    urb_push(stack, (Value){.u = code->data[i + 1].u});
+                    // next value will be added to stack as it is
+                    urb_push(stack, code->data[i + 1]);
 
-                    // we must skip the next token as we already processed it
+                    // we must skip the next token as we already "processed" it
                     i++;
                 }
                 break;
@@ -697,6 +748,11 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     }
                     urb_push(stack, (Value){.p = list});
                     i += elements;
+                }
+                break;
+                case ALIAS_WORD_SIZE:
+                {
+                    urb_push(stack, (Value){.i = sizeof(Int)});
                 }
                 break;
 
