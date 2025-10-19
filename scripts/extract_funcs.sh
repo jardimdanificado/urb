@@ -18,13 +18,12 @@ for file in "$@"; do
 
     while IFS= read -r line; do
         name=$(echo "$line" | sed -E 's/.*void[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/')
-        reg_name=${name#urb_}
+        # remove prefix URB_ ou urb_
+        reg_name=$(echo "$name" | sed -E 's/^[Uu][Rr][Bb]_//')
         funcs+=("$reg_name:$name")
     done < <(grep -Poz "$regex" "$file" | tr '\0' '\n' || true)
 done
 
 # output
-# primeira linha: arquivo temporário concatenado
-# resto: funções
 printf "%s\n" "$tmp_c"
 printf "%s\n" "${funcs[@]}"

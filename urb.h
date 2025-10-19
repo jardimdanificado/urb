@@ -383,12 +383,12 @@ static inline void* urb_alloc(List* arena, size_t size)
 // if adding new opcodes and using the experimental debug system
 // be sure to register the opcodes in scripts/opcodes.h too
 enum {
-    // special opcodes
-    OP_CALL = INT_MAX - 127,
-    OP_GOIF,
-    OP_DUP,
-
+    // code opcodes
+    OP_JUMPIF = INT_MAX - 127,
+    
     // list opcodes
+    OP_CALL,
+    OP_CALLIST,
     OP_NEW,
     OP_FREE,
     OP_PUSH,
@@ -400,11 +400,14 @@ enum {
     OP_SWAP,
     OP_SET,
     OP_GET,
-    OP_DROP,
     OP_COPY,
     OP_LENGTH,
     OP_DOUBLE,
     OP_HALF,
+    
+    // stack ops
+    OP_DUP,
+    OP_DROP,
 
     // math opcodes
     OP_ADD,
@@ -415,7 +418,7 @@ enum {
     OP_BIT_LS,
     OP_BIT_RS,
     OP_BIT_NOT,
-
+    
     // cmp opcoddes
     OP_EQUALS,
     OP_NOT_EQUALS,
@@ -423,20 +426,20 @@ enum {
     OP_LESSER,
     OP_AND,
     OP_OR,
-
+    
     // buffer opcodes
     OP_WRITE,
     OP_READ,
-    OP_RESIZE,
 
     // alias
     ALIAS_CONTEXT,
     ALIAS_STACK,
     ALIAS_CODE,
     ALIAS_BYPASS,
-    ALIAS_STRING,
     ALIAS_WORD_SIZE
 };
+
+#define INDEX_FIX(index, size) ((index < 0) ? (size + index) : index)
 
 static inline Value urb_token_preprocess(char* token)
 {
@@ -504,256 +507,141 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
         {
             switch(code->data[i].i)
             {
-                case OP_GOIF:
-                {
-                    if (urb_pop(stack).i)
-                    {
-                        i = urb_pop(stack).i;
-                    }
-                }
-                break;
-                case OP_CALL:
-                {
-                    // in C99 you cant cast a function pointer from a void*
-                    urb_pop(stack).fn(stack);
-                }
-                break;
-                case OP_DUP:
-                {
-                    // dplicate the last value of the stack
-                    urb_push(stack, (Value){.u = stack->data[stack->size - 1].u});
-                }
+                // code ops
+                case OP_JUMPIF:
+                    i = (urb_pop(stack).i) ? urb_pop(stack).i : i;
                 break;
 
-                // list operators
+                // listops
+                case OP_CALL:
+                    ((List*)urb_pop(stack).p)->data[urb_pop(stack).i].fn(stack);
+                break;
+                case OP_CALLIST:
+                    urb_interpret(context, urb_pop(stack).p, stack);
+                break;
                 case OP_NEW:
-                {
                     urb_push(stack, (Value){.p = urb_new(URB_DEFAULT_SIZE)});
-                }
                 break;
                 case OP_FREE:
-                {
                     urb_free(urb_pop(stack).p);
-                }
                 break;
                 case OP_PUSH:
-                {
                     urb_push(urb_pop(stack).p, urb_pop(stack));
-                }
                 break;
                 case OP_POP:
-                {
                     urb_push(stack, urb_pop(urb_pop(stack).p));
-                }
                 break;
                 case OP_UNSHIFT:
-                {
                     urb_unshift(urb_pop(stack).p, urb_pop(stack));
-                }
                 break;
                 case OP_SHIFT:
-                {
                     urb_push(stack, urb_shift(urb_pop(stack).p));
-                }
                 break;
                 case OP_INSERT:
-                {
                     urb_insert(urb_pop(stack).p, urb_pop(stack).i, urb_pop(stack));
-                }
                 break;
                 case OP_REMOVE:
-                {
                     urb_push(stack, urb_remove(urb_pop(stack).p, urb_pop(stack).i));
-                }
                 break;
                 case OP_SWAP:
-                {
                     urb_swap(urb_pop(stack).p, urb_pop(stack).i, urb_pop(stack).i);
-                }
                 break;
                 case OP_SET:
-                {
                     urb_set(urb_pop(stack).p, urb_pop(stack).i, urb_pop(stack));
-                }
                 break;
                 case OP_GET:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    urb_push(stack, urb_get(list, index));
-                }
-                break;
-                case OP_DROP:
-                {
-                    urb_pop(stack);
-                }
+                    urb_push(stack, urb_get(urb_pop(stack).p, urb_pop(stack).i));
                 break;
                 case OP_COPY:
-                {
                     urb_push(stack, (Value){.p = urb_copy(urb_pop(stack).p)});
-                }
                 break;
                 case OP_LENGTH:
-                {
                     urb_push(stack, (Value){.i = ((List*)urb_pop(stack).p)->size});
-                }
                 break;
                 case OP_DOUBLE:
-                {
                     urb_double((List*)urb_pop(stack).p);
-                }
                 break;
                 case OP_HALF:
-                {
                     urb_half((List*)urb_pop(stack).p);
-                }
                 break;
 
-                // basic math operators
+                // stack ops
+                case OP_DUP:
+                    urb_push(stack, (Value){.u = stack->data[stack->size - 1].u});
+                break;
+                case OP_DROP:
+                    urb_pop(stack);
+                break;
+
+                // math ops
+                case OP_ADD:
+                    urb_push(stack, (Value){.i = urb_pop(stack).i + urb_pop(stack).i});
+                break;
+                case OP_SUB:
+                    urb_push(stack, (Value){.i = urb_pop(stack).i - urb_pop(stack).i});
+                break;
                 case OP_BIT_AND:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i & urb_pop(stack).i});
-                }
                 break;
                 case OP_BIT_OR:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i | urb_pop(stack).i});
-                }
                 break;
                 case OP_BIT_XOR:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i ^ urb_pop(stack).i});
-                }
                 break;
                 case OP_BIT_LS:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i << urb_pop(stack).i});
-                }
                 break;
                 case OP_BIT_RS:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i >> urb_pop(stack).i});
-                }
                 break;
                 case OP_BIT_NOT:
-                {
                     urb_push(stack, (Value){.i = ~urb_pop(stack).i});
-                }
                 break;
 
-                
-                // conditions
+                // cond ops
                 case OP_EQUALS:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i == urb_pop(stack).i});
-                }
                 break;
                 case OP_NOT_EQUALS:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i != urb_pop(stack).i});
-                }
                 break;
                 case OP_GREATER:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i > urb_pop(stack).i});
-                }
                 break;
                 case OP_LESSER:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i < urb_pop(stack).i});
-                }
                 break;
                 case OP_AND:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i && urb_pop(stack).i});
-                }
                 break;
                 case OP_OR:
-                {
                     urb_push(stack, (Value){.i = urb_pop(stack).i || urb_pop(stack).i});
-                }
                 break;
 
-                // byte operators
+                // byte ops
                 case OP_WRITE:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    Int value = urb_pop(stack).i;
-                    uint8_t* buffer_data = (uint8_t*)list->data;
-                    buffer_data[index] = value;
-                }
+                    ((uint8_t*)((List*)urb_pop(stack).p)->data)[urb_pop(stack).i] = urb_pop(stack).i;
                 break;
                 case OP_READ:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    uint8_t* buffer_data = (uint8_t*)list->data;
-                    urb_push(stack, (Value){.i = buffer_data[index]});
-                }
+                    urb_push(stack, (Value){.i = ((uint8_t*)((List*)urb_pop(stack).p)->data)[urb_pop(stack).i]});
                 break;
-                case OP_RESIZE:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int new_capacity = urb_pop(stack).i;
-                    while((new_capacity % sizeof(Int)) != 0)
-                    {
-                        new_capacity++;
-                    }
-                    list->data = realloc(list->data, new_capacity/sizeof(Int));
-                    list->capacity = new_capacity;
-                    list->size = (list->size > list->capacity) ? list->capacity : list->size;
-                }
-                break;
-                
+
                 // aliases
                 case ALIAS_CONTEXT:
-                {
                     urb_push(stack, (Value){.p = context});
-                }
                 break;
                 case ALIAS_STACK:
-                {
                     urb_push(stack, (Value){.p = stack});
-                }
                 break;
                 case ALIAS_CODE:
-                {
                     urb_push(stack, (Value){.p = code});
-                }
                 break;
                 case ALIAS_BYPASS:
-                {
-                    // next value will be added to stack as it is
-                    urb_push(stack, code->data[i + 1]);
-
-                    // we must skip the next token as we already "processed" it
-                    i++;
-                }
-                break;
-                case ALIAS_STRING:
-                {
-                    void* str = &(code->data[0].i);
-                    Int elements = strlen(str);
-                    while (elements % 8 != 0)
-                    {
-                        elements++;
-                    }
-                    elements = elements/8;
-
-                    List *list = urb_new(URB_DEFAULT_SIZE);
-                    for (Int j = 0; j < elements; j++)
-                    {
-                        urb_push(list, code->data[i + j]);
-                    }
-                    urb_push(stack, (Value){.p = list});
-                    i += elements;
-                }
+                    urb_push(stack, code->data[++i]);
                 break;
                 case ALIAS_WORD_SIZE:
-                {
                     urb_push(stack, (Value){.i = sizeof(Int)});
-                }
                 break;
 
                 default:
