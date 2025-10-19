@@ -83,7 +83,7 @@ struct List
 // List functions   
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
 static inline List*              urb_new(Int size);
-static inline List*              urb_from_pointer(void* ptr, Int size);
+static inline List*              urb_from_raw(void* ptr, Int size);
 // free the list    
 static inline void               urb_free(List *list);
 // double the list capacity   
@@ -125,6 +125,71 @@ static inline List*              urb_preprocess(char* input_str);
 // ub representation
 static inline void               urb_interpret(List *context, List* code, List* stack);
 
+// BASES
+#define URB_INT_MAX (INT_MAX - 128)
+#define URB_INT_MIN (INT_MIN + 128)
+
+// if adding new opcodes and using the experimental debug system
+// be sure to register the opcodes in scripts/opcodes.h too
+enum {
+    // code opcodes
+    OP_JUMPIF = INT_MAX - 127,
+    
+    // list opcodes
+    OP_CALL,
+    OP_CALLIST,
+    OP_NEW,
+    OP_FREE,
+    OP_PUSH,
+    OP_POP,
+    OP_UNSHIFT,
+    OP_SHIFT,
+    OP_INSERT,
+    OP_REMOVE,
+    OP_SWAP,
+    OP_SET,
+    OP_GET,
+    OP_COPY,
+    OP_LENGTH,
+    OP_DOUBLE,
+    OP_HALF,
+    
+    // stack ops
+    OP_DUP,
+    OP_DROP,
+
+    // math opcodes
+    OP_ADD,
+    OP_SUB,
+    OP_BIT_AND,
+    OP_BIT_OR,
+    OP_BIT_XOR,
+    OP_BIT_LS,
+    OP_BIT_RS,
+    OP_BIT_NOT,
+    
+    // cmp opcoddes
+    OP_EQUALS,
+    OP_NOT_EQUALS,
+    OP_GREATER,
+    OP_LESSER,
+    OP_AND,
+    OP_OR,
+    
+    // buffer opcodes
+    OP_WRITE,
+    OP_READ,
+
+    // alias
+    ALIAS_CONTEXT,
+    ALIAS_STACK,
+    ALIAS_CODE,
+    ALIAS_BYPASS,
+    ALIAS_WORD_SIZE
+};
+
+#define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
+
 // functions implementations
 // functions implementations
 // functions implementations
@@ -154,7 +219,7 @@ static inline List *urb_new(Int size)
     return list;
 }
 
-static inline List *urb_from_pointer(void* ptr, Int size)
+static inline List *urb_from_raw(void* ptr, Int size)
 {
     List *list = urb_new(size);
     memcpy(list->data, ptr, size * sizeof(Int));
@@ -227,6 +292,8 @@ static inline void urb_insert(List *list, Int i, Value value)
         urb_double(list);
     }
 
+    i = INDEX_CYCLE(i);
+
     if (i < 0 || i > list->size)
     {
         printf("URB_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR " \n", i, list->size);
@@ -270,7 +337,8 @@ static inline Value urb_shift(List *list)
 
 static inline Value urb_remove(List *list, Int i)
 {
-    Value ret = list->data[i]; 
+    i = INDEX_CYCLE(i);
+    Value ret = list->data[i];
 
     size_t elements_to_move = 0; 
     if (list->size == 0)
@@ -290,12 +358,15 @@ static inline Value urb_remove(List *list, Int i)
 
 static inline Value urb_fast_remove(List *list, Int i)
 {
+    i = INDEX_CYCLE(i);
     urb_swap(list, i, list->size - 1);
     return urb_pop(list);
 }
 
 static inline void urb_swap(List *list, Int i1, Int i2)
 {
+    i1 = INDEX_CYCLE(i1);
+    i2 = INDEX_CYCLE(i2);
     Value tmp = list->data[i1];
     list->data[i1] = list->data[i2];
     list->data[i2] = tmp;
@@ -341,6 +412,7 @@ static inline List* urb_copy(const List *list)
 
 static inline Value urb_get(const List *list, Int i)
 {
+    i = INDEX_CYCLE(i);
     if (i < 0 || i >= list->size)
     {
         return (Value){.i=-1}; // return -1 if index is out of range
@@ -350,6 +422,7 @@ static inline Value urb_get(const List *list, Int i)
 
 static inline void urb_set(List *list, Int i, Value value)
 {
+    i = INDEX_CYCLE(i);
     if (i < 0 || i >= list->size)
     {
         printf("URB_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR " \n", i, list->size);
@@ -375,71 +448,6 @@ static inline void* urb_alloc(List* arena, size_t size)
     arena->size += aligned_size;
     return ptr;
 }
-
-// BASES
-#define URB_INT_MAX (INT_MAX - 128)
-#define URB_INT_MIN (INT_MIN + 128)
-
-// if adding new opcodes and using the experimental debug system
-// be sure to register the opcodes in scripts/opcodes.h too
-enum {
-    // code opcodes
-    OP_JUMPIF = INT_MAX - 127,
-    
-    // list opcodes
-    OP_CALL,
-    OP_CALLIST,
-    OP_NEW,
-    OP_FREE,
-    OP_PUSH,
-    OP_POP,
-    OP_UNSHIFT,
-    OP_SHIFT,
-    OP_INSERT,
-    OP_REMOVE,
-    OP_SWAP,
-    OP_SET,
-    OP_GET,
-    OP_COPY,
-    OP_LENGTH,
-    OP_DOUBLE,
-    OP_HALF,
-    
-    // stack ops
-    OP_DUP,
-    OP_DROP,
-
-    // math opcodes
-    OP_ADD,
-    OP_SUB,
-    OP_BIT_AND,
-    OP_BIT_OR,
-    OP_BIT_XOR,
-    OP_BIT_LS,
-    OP_BIT_RS,
-    OP_BIT_NOT,
-    
-    // cmp opcoddes
-    OP_EQUALS,
-    OP_NOT_EQUALS,
-    OP_GREATER,
-    OP_LESSER,
-    OP_AND,
-    OP_OR,
-    
-    // buffer opcodes
-    OP_WRITE,
-    OP_READ,
-
-    // alias
-    ALIAS_CONTEXT,
-    ALIAS_STACK,
-    ALIAS_CODE,
-    ALIAS_BYPASS,
-    ALIAS_WORD_SIZE
-};
-
-#define INDEX_FIX(index, size) ((index < 0) ? (size + index) : index)
 
 static inline Value urb_token_preprocess(char* token)
 {
@@ -514,7 +522,12 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
 
                 // listops
                 case OP_CALL:
-                    ((List*)urb_pop(stack).p)->data[urb_pop(stack).i].fn(stack);
+                {
+                    List* list = (List*)urb_pop(stack).p;
+                    Int index = urb_pop(stack).i;
+                    index = INDEX_CYCLE(index);
+                    list->data[index].fn(stack);
+                }
                 break;
                 case OP_CALLIST:
                     urb_interpret(context, urb_pop(stack).p, stack);
