@@ -1,3 +1,6 @@
 #include "../build/dictionary.h"
+#include "../lib/std/syntax.h"
 
-123 test_func CONTEXT CALL
+
+call(print_int, 123)
+call(println)

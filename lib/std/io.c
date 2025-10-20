@@ -2,7 +2,7 @@
 
 void print_string(List* stack)
 {
-    char *str = urb_pop(stack).p;
+    uint8_t *str = urb_pop(stack).p;
     if (str == NULL)
     {
         printf("NULL");
@@ -11,22 +11,10 @@ void print_string(List* stack)
     printf("%s", str);
 }
 
-void print_int(List* stack)
+void print(List* stack)
 {
     Int value = urb_pop(stack).i;
     printf("%ld", value);
-}
-
-void print_float(List* stack)
-{
-    Float value = urb_pop(stack).f;
-    printf("%f", value);
-}
-
-void print_bool(List* stack)
-{
-    Int value = urb_pop(stack).i;
-    printf(value ? "true" : "false");
 }
 
 void println(List* stack)
@@ -40,7 +28,7 @@ void ls(List* stack)
     List* list = urb_pop(stack).p;
     for (Int i = 0; i < list->size; i++)
     {
-        printf("[%ld] = %ld\n", i);
+        printf("[%ld] = %ld\n", i, list->data[i].i);
     }
 }
 
