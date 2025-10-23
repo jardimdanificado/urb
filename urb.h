@@ -711,7 +711,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = sizeof(Int)});
                 break;
                 case ALIAS_STRING:
-                    urb_push(stack, (Value){.p = &code->data[i + 1]});
                 break;
 
                 default:

@@ -5,7 +5,7 @@
 
 # user is meant to edit this manually for now
 LIBS="lib/example.c lib/std/*"
-SOURCE_FILE=examples/callist_example.urb
+SOURCE_FILE=examples/example.urb
 
 echo $LIBS
 

@@ -2,12 +2,13 @@
 
 void print_string(List* stack)
 {
-    uint8_t *str = urb_pop(stack).p;
-    if (str == NULL)
+    List *ls = urb_pop(stack).p;
+    if (ls->capacity == 0)
     {
         printf("NULL");
         return;
     }
+    char *str = (char*)ls->data;
     printf("%s", str);
 }
 

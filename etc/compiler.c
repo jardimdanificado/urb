@@ -242,87 +242,25 @@ List* special_space_split(char *str)
     return splited;
 }
 
-List* special_split(char *str, char delim)
-{
-    List *splited = urb_new(URB_DEFAULT_SIZE);
-    
-    int recursion = 0;
-    int inside_double_quotes = 0;
-    int inside_single_quotes = 0;
-    int i = 0;
-    int last_i = 0;
-
-    while (str[i] != '\0')
-    {
-        if (str[i] == '(' && inside_double_quotes == 0 && inside_single_quotes == 0)
-        {
-            recursion++;
-        }
-        else if (str[i] == ')' && inside_double_quotes == 0 && inside_single_quotes == 0)
-        {
-            recursion--;
-        }
-        else if (str[i] == '"' && recursion == 0 && inside_single_quotes == 0)
-        {
-            // Alterna o estado de dentro/fora de aspas duplas
-            inside_double_quotes = !inside_double_quotes;
-        }
-        else if (str[i] == '\'' && recursion == 0 && inside_double_quotes == 0)
-        {
-            // Alterna o estado de dentro/fora de aspas simples
-            inside_single_quotes = !inside_single_quotes;
-        }
-
-        // Se encontramos o delimitador e não estamos dentro de parênteses nem de aspas simples ou duplas
-        if (str[i] == delim && recursion == 0 && inside_double_quotes == 0 && inside_single_quotes == 0)
-        {
-            char* tmp = str_nduplicate(str + last_i, i - last_i);
-            urb_push(splited, (Value){.p = tmp});
-            last_i = i + 1;
-        }
-        else if (str[i + 1] == '\0') // Checagem para o último token
-        {
-            char* tmp = str_nduplicate(str + last_i, i - last_i + 1);
-            urb_push(splited, (Value){.p = tmp});
-        }
-
-        i++;
-    }
-    return splited;
-}
-
-List* str_split(char *str, char *delim)
-{
-    List *splited = urb_new(URB_DEFAULT_SIZE);
-    
-    Int i = 0;
-    while (str[i] != '\0')
-    {
-        if (str[i] == delim[0])
-        {
-            i++;
-        }
-        else
-        {
-            Int j = i;
-            while (str[j] != delim[0] && str[j] != '\0')
-            {
-                j++;
-            }
-            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
-            i = j;
-        }
-    }
-
-    return splited;
-}
-
-
 static inline List* urb_preprocess(char* input_str)
 {
     List* code = urb_new(URB_DEFAULT_SIZE);
+    List* label_values = urb_new(URB_DEFAULT_SIZE);
+    List* label_names = urb_new(URB_DEFAULT_SIZE);
     List* tokens = special_space_split(input_str);
-    
+    for(UInt i = 0; i < tokens->size; i++)
+    {
+        char* token = tokens->data[i].p;
+        if(strchr(token, ':'))
+        {
+            token[strlen(token)-1] = 0;
+            urb_push(label_names, (Value){.p = token});
+            urb_push(label_values, (Value){.u = i});
+            urb_remove(tokens, i);
+            i--;
+        }
+    }
+
     for(UInt i = 0; i < tokens->size; i++)
     {
         char* token = tokens->data[i].p;
@@ -367,31 +305,44 @@ static inline List* urb_preprocess(char* input_str)
                     urb_push(code, (Value){.u = strtol(token, NULL, 10)});
                 }
             break;
-            case '"':
+            case '\'':
             {
-
+                urb_push(code, (Value){.u = token[1]});
             }
             break;
 
             default:
             {
                 bool found = 0;
-                for(UInt i = 0; i < 32; i++)
+                for(UInt j = 0; j < 32; j++)
                 {
-                    if(strcmp(token, op_names[i]) == 0)
+                    if(strcmp(token, op_names[j]) == 0)
                     {
-                        urb_push(code, (Value){.i = op_values[i]});
+                        urb_push(code, (Value){.i = op_values[j]});
                         found = true;
                         break;
                     }
                 }
                 if (!found)
                 {
-                    for(UInt i = 0; i < CUSTOM_FUNC_COUNT; i++)
+                    for(UInt j = 0; j < CUSTOM_FUNC_COUNT; j++)
                     {
-                        if(strcmp(token, custom_func_names[i]) == 0)
+                        if(strcmp(token, custom_func_names[j]) == 0)
                         {
-                            urb_push(code, (Value){.i = custom_func_indexes[i]});
+                            urb_push(code, (Value){.i = custom_func_indexes[j]});
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (!found)
+                {
+                    for(UInt j = 0; j < label_names->size; j++)
+                    {
+                        if(strcmp(token, label_names->data[j].p) == 0)
+                        {
+                            urb_push(code, (Value){.i = label_values->data[j].i});
+                            found = true;
                             break;
                         }
                     }
@@ -401,6 +352,8 @@ static inline List* urb_preprocess(char* input_str)
         }
         free(token);
     }
+    urb_free(label_names);
+    urb_free(label_values);
     return code;
 }
 
