@@ -1,2 +1,5 @@
 #!/bin/bash
-cpp $1 -E -P | ./urbc
+tempfile=$(mktemp)
+cpp $1 -P > "$tempfile"
+./urbc "$tempfile"
+rm "$tempfile"

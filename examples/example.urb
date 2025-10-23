@@ -1,5 +1,5 @@
 #include "../build/dictionary.h"
-#include "../lib/std/syntax.h"
+#include "../lib/syntax.h"
 
 
 call(print_int, 123)

@@ -60,9 +60,9 @@
 #define write(...)            REVERSE(__VA_ARGS__) WRITE
 #define read(...)             REVERSE(__VA_ARGS__) READ
 
-#define context(...)          REVERSE(__VA_ARGS__) CONTEXT
-#define stack(...)            REVERSE(__VA_ARGS__) STACK
-#define code(...)             REVERSE(__VA_ARGS__) CODE
+// #define context(...)          REVERSE(__VA_ARGS__) CONTEXT
+// #define stack(...)            REVERSE(__VA_ARGS__) STACK
+// #define code(...)             REVERSE(__VA_ARGS__) CODE
 #define bypass(...)           BYPASS __VA_ARGS__
 #define word_size(...)        REVERSE(__VA_ARGS__) WORD_SIZE
 

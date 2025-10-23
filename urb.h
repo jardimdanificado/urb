@@ -188,7 +188,8 @@ enum {
     ALIAS_STACK,
     ALIAS_CODE,
     ALIAS_BYPASS,
-    ALIAS_WORD_SIZE
+    ALIAS_WORD_SIZE,
+    ALIAS_BUFFER,
 };
 
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
@@ -222,10 +223,10 @@ static inline List *urb_new(Int size)
     return list;
 }
 
-static inline List *urb_from_raw(void* ptr, Int size)
+static inline List *urb_from_raw(void* ptr, Int capacity)
 {
-    List *list = urb_new(size);
-    memcpy(list->data, ptr, size * sizeof(Int));
+    List *list = urb_new(capacity);
+    memcpy(list->data, ptr, capacity * sizeof(Int));
     return list;
 }
 
