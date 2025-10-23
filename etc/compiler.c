@@ -2,10 +2,7 @@
 // urb.c is a generated file
 // usually found at build/urb.c
 #include "urb.c"
-
-// self-explainable
-// we undefine the free macro to use 
-#undef free
+#include "stdarg.h"
 
 // file stuff
 char* file_read(char *filename)
@@ -46,6 +43,364 @@ char* file_read(char *filename)
 
     free(line);
     fclose(file);
+    return code;
+}
+
+//string functions
+char* str_duplicate(const char *str)
+{
+    char *dup = (char*)malloc(strlen(str) + 1);
+    strcpy(dup, str);
+    return dup;
+}
+
+char* str_nduplicate(const char *str, Int n)
+{
+    char *dup = (char*)malloc(n + 1);
+    for (Int i = 0; i < n; i++)
+    {
+        dup[i] = str[i];
+    }
+    dup[n] = '\0';
+    return dup;
+}
+
+char* str_sub(const char *str, Int start, Int end)
+{
+    char *sub = (char*)malloc(end - start + 1);
+    for (Int i = start; i < end; i++)
+    {
+        sub[i - start] = str[i];
+    }
+    sub[end - start] = '\0';
+    return sub;
+}
+
+char* str_format(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    Int size = vsnprintf(NULL, 0, format, args);
+    va_end(args);
+    char *str = (char*)malloc(size + 1);
+    va_start(args, format);
+    vsprintf(str, format, args);
+    va_end(args);
+    return str;
+}
+
+char* str_concat(const char *str1, const char *str2)
+{
+    char *str = (char*)malloc(strlen(str1) + strlen(str2) + 1);
+    strcpy(str, str1);
+    strcat(str, str2);
+    return str;
+}
+
+char* str_replace(const char *str, const char *substr, const char *replacement)
+{
+    const char *pos = strstr(str, substr); // Localiza a primeira ocorrência de 'substr'
+    if (!pos)
+    {
+        // Se não encontrou, retorna uma cópia da string original
+        char *newstr = (char *)malloc(strlen(str) + 1);
+        strcpy(newstr, str);
+        return newstr;
+    }
+
+    // Calcula os tamanhos
+    size_t len_before = pos - str;
+    size_t substr_len = strlen(substr);
+    size_t replacement_len = strlen(replacement);
+    size_t new_len = strlen(str) - substr_len + replacement_len;
+
+    // Aloca memória para a nova string
+    char *newstr = (char *)malloc(new_len + 1);
+
+    // Constrói a nova string
+    strncpy(newstr, str, len_before); // Parte antes da substring
+    strcpy(newstr + len_before, replacement); // Substituição
+    strcpy(newstr + len_before + replacement_len, pos + substr_len); // Parte após a substring
+
+    return newstr;
+}
+
+
+char* str_replace_all(const char *str, const char *substr, const char *replacement)
+{
+    size_t substr_len = strlen(substr);
+    size_t replacement_len = strlen(replacement);
+
+    // Contar substrings e calcular tamanho necessário em uma única passagem
+    size_t new_len = 0;
+    size_t count = 0;
+    for (const char *p = strstr(str, substr); p; p = strstr(p + substr_len, substr))
+    {
+        count++;
+        new_len += (p - str) - new_len; // Adiciona a parte antes da substring
+        new_len += replacement_len;    // Adiciona o tamanho da substituição
+        str = p + substr_len;          // Avança para o próximo trecho
+    }
+    new_len += strlen(str); // Adiciona o restante da string
+
+    // Aloca memória para a nova string
+    char *newstr = (char *)malloc(new_len + 1);
+    char *dest = newstr;
+
+    // Construir a nova string
+    str = str - new_len + strlen(newstr); // Reiniciar ponteiro para o início da string original
+    const char *p = strstr(str, substr);
+    while (p)
+    {
+        size_t len_before = p - str;
+        strncpy(dest, str, len_before);    // Copiar parte antes da substring
+        dest += len_before;
+
+        strcpy(dest, replacement);        // Copiar substituição
+        dest += replacement_len;
+
+        str = p + substr_len;             // Avançar na string original
+        p = strstr(str, substr);
+    }
+    strcpy(dest, str);                    // Copiar o restante da string original
+
+    return newstr;
+}
+
+
+Int str_find(const char *str, const char *substr)
+{
+    return strstr(str, substr) - str;
+}
+
+List* special_space_split(char *str)
+{
+    List *splited = urb_new(URB_DEFAULT_SIZE);
+    
+    int i = 0;
+    while (str[i] != '\0')
+    {
+        if (str[i] == '(')
+        {
+            int j = i;
+            int count = 1;
+            while (count != 0)
+            {
+                j++;
+                if (str[j] == '(')
+                {
+                    count++;
+                }
+                else if (str[j] == ')')
+                {
+                    count--;
+                }
+            }
+            char *tmp = str_nduplicate(str + i, j - i + 1);
+            urb_push(splited, (Value){.p = tmp});
+            i = j + 1;
+        }
+        else if (str[i] == '"')
+        {
+            int j = i;
+            j++;  // Avança para depois da abertura de aspas duplas
+            while (str[j] != '"' && str[j] != '\0')
+            {
+                j++;
+            }
+            char *tmp = str_nduplicate(str + i, j - i + 1);
+            urb_push(splited, (Value){.p = tmp});
+            i = j + 1;  // Avança para após o fechamento de aspas duplas
+        }
+        else if (str[i] == '\'')
+        {
+            int j = i;
+            j++;  // Avança para depois da abertura de aspas simples
+            while (str[j] != '\'' && str[j] != '\0')
+            {
+                j++;
+            }
+            char *tmp = str_nduplicate(str + i, j - i + 1);
+            urb_push(splited, (Value){.p = tmp});
+            i = j + 1;  // Avança para após o fechamento de aspas simples
+        }
+        else if (isspace(str[i]))
+        {
+            i++;
+        }
+        else
+        {
+            int j = i;
+            while (!isspace(str[j]) && str[j] != '\0' && str[j] != '(' && str[j] != ')' && str[j] != '"' && str[j] != '\'')
+            {
+                j++;
+            }
+            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
+            i = j;
+        }
+    }
+    return splited;
+}
+
+List* special_split(char *str, char delim)
+{
+    List *splited = urb_new(URB_DEFAULT_SIZE);
+    
+    int recursion = 0;
+    int inside_double_quotes = 0;
+    int inside_single_quotes = 0;
+    int i = 0;
+    int last_i = 0;
+
+    while (str[i] != '\0')
+    {
+        if (str[i] == '(' && inside_double_quotes == 0 && inside_single_quotes == 0)
+        {
+            recursion++;
+        }
+        else if (str[i] == ')' && inside_double_quotes == 0 && inside_single_quotes == 0)
+        {
+            recursion--;
+        }
+        else if (str[i] == '"' && recursion == 0 && inside_single_quotes == 0)
+        {
+            // Alterna o estado de dentro/fora de aspas duplas
+            inside_double_quotes = !inside_double_quotes;
+        }
+        else if (str[i] == '\'' && recursion == 0 && inside_double_quotes == 0)
+        {
+            // Alterna o estado de dentro/fora de aspas simples
+            inside_single_quotes = !inside_single_quotes;
+        }
+
+        // Se encontramos o delimitador e não estamos dentro de parênteses nem de aspas simples ou duplas
+        if (str[i] == delim && recursion == 0 && inside_double_quotes == 0 && inside_single_quotes == 0)
+        {
+            char* tmp = str_nduplicate(str + last_i, i - last_i);
+            urb_push(splited, (Value){.p = tmp});
+            last_i = i + 1;
+        }
+        else if (str[i + 1] == '\0') // Checagem para o último token
+        {
+            char* tmp = str_nduplicate(str + last_i, i - last_i + 1);
+            urb_push(splited, (Value){.p = tmp});
+        }
+
+        i++;
+    }
+    return splited;
+}
+
+List* str_split(char *str, char *delim)
+{
+    List *splited = urb_new(URB_DEFAULT_SIZE);
+    
+    Int i = 0;
+    while (str[i] != '\0')
+    {
+        if (str[i] == delim[0])
+        {
+            i++;
+        }
+        else
+        {
+            Int j = i;
+            while (str[j] != delim[0] && str[j] != '\0')
+            {
+                j++;
+            }
+            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
+            i = j;
+        }
+    }
+
+    return splited;
+}
+
+
+static inline List* urb_preprocess(char* input_str)
+{
+    List* code = urb_new(URB_DEFAULT_SIZE);
+    List* tokens = special_space_split(input_str);
+    
+    for(UInt i = 0; i < tokens->size; i++)
+    {
+        char* token = tokens->data[i].p;
+        switch (token[0])
+        {
+            case '0':
+                if(token[1] == 'b')
+                {
+                    urb_push(code, (Value){.i = strtol(token + 2, NULL, 2)});
+                    break;
+                }
+                else if(token[1] == 'x')
+                {
+                    urb_push(code, (Value){.i = strtol(token + 2, NULL, 16)});
+                    break;
+                }
+                else if(token[1] == 'o')
+                {
+                    urb_push(code, (Value){.i = strtol(token + 2, NULL, 8)});
+                    break;
+                }
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                if(strchr(token, 'f'))
+                {
+                    urb_push(code, (Value){.f = strtod(token, NULL)});
+                }
+                else if(strchr(token, 'u'))
+                {
+                    urb_push(code, (Value){.i = ALIAS_BYPASS});
+                    urb_push(code, (Value){.u = strtoul(token, NULL, 10)});
+                }
+                else
+                {
+                    urb_push(code, (Value){.u = strtol(token, NULL, 10)});
+                }
+            break;
+            case '"':
+            {
+
+            }
+            break;
+
+            default:
+            {
+                bool found = 0;
+                for(UInt i = 0; i < 32; i++)
+                {
+                    if(strcmp(token, op_names[i]) == 0)
+                    {
+                        urb_push(code, (Value){.i = op_values[i]});
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    for(UInt i = 0; i < CUSTOM_FUNC_COUNT; i++)
+                    {
+                        if(strcmp(token, custom_func_names[i]) == 0)
+                        {
+                            urb_push(code, (Value){.i = custom_func_indexes[i]});
+                            break;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        free(token);
+    }
     return code;
 }
 

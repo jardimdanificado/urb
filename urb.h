@@ -121,39 +121,27 @@ static inline void               urb_set(List *list, Int i, Value value);
 static inline const char*        urb_get_version(void);
 // arena   
 static inline void*              urb_alloc(List *arena, size_t size);
-// preprocess string into urb code
-static inline List*              urb_preprocess(char* input_str);
 // ub representation
 static inline void               urb_interpret(List *context, List* code, List* stack);
-
-// BASES
-#define URB_INT_MAX (INT_MAX - 128)
-#define URB_INT_MIN (INT_MIN + 128)
 
 // if adding new opcodes and using the experimental debug system
 // be sure to register the opcodes in scripts/opcodes.h too
 enum {
     // code opcodes
-    OP_JUMPIF = INT_MAX - 127,
+    OP_JUMPIF = INT_MAX - 31,
     
     // list opcodes
     OP_CALL,
-    OP_CALLIST,
     OP_NEW,
     OP_FREE,
     OP_PUSH,
     OP_POP,
     OP_UNSHIFT,
     OP_SHIFT,
-    OP_INSERT,
-    OP_REMOVE,
     OP_SWAP,
     OP_SET,
     OP_GET,
-    OP_COPY,
     OP_LENGTH,
-    OP_DOUBLE,
-    OP_HALF,
     
     // stack ops
     OP_DUP,
@@ -165,17 +153,11 @@ enum {
     OP_BIT_AND,
     OP_BIT_OR,
     OP_BIT_XOR,
-    OP_BIT_LS,
-    OP_BIT_RS,
-    OP_BIT_NOT,
     
     // cmp opcoddes
     OP_EQUALS,
-    OP_NOT_EQUALS,
     OP_GREATER,
-    OP_GREATER_OR_EQUAL,
     OP_LESSER,
-    OP_LESSER_OR_EQUAL,
     OP_AND,
     OP_OR,
     
@@ -189,8 +171,80 @@ enum {
     ALIAS_CODE,
     ALIAS_BYPASS,
     ALIAS_WORD_SIZE,
-    ALIAS_BUFFER,
+    ALIAS_STRING,
 };
+
+
+static const char *op_names[] = {
+    "jumpif",
+    "call",
+    "new",
+    "free",
+    "push",
+    "pop",
+    "unshift",
+    "shift",
+    "swap",
+    "set",
+    "get",
+    "length",
+    "dup",
+    "drop",
+    "add",
+    "sub",
+    "bit_and",
+    "bit_or",
+    "bit_xor",
+    "equals",
+    "greater",
+    "lesser",
+    "and",
+    "or",
+    "write",
+    "read",
+    "context",
+    "stack",
+    "code",
+    "bypass",
+    "word_size",
+    "string",
+};
+
+static const Int op_values[] = {
+    INT_MAX - 31, // jumpif
+    INT_MAX - 30, // call
+    INT_MAX - 29, // new
+    INT_MAX - 28, // free
+    INT_MAX - 27, // push
+    INT_MAX - 26, // pop
+    INT_MAX - 25, // unshift
+    INT_MAX - 24, // shift
+    INT_MAX - 23, // swap
+    INT_MAX - 22, // set
+    INT_MAX - 21, // get
+    INT_MAX - 20, // length
+    INT_MAX - 19, // dup
+    INT_MAX - 18, // drop
+    INT_MAX - 17, // add
+    INT_MAX - 16, // sub
+    INT_MAX - 15, // bit_and
+    INT_MAX - 14, // bit_or
+    INT_MAX - 13, // bit_xor
+    INT_MAX - 12, // equals
+    INT_MAX - 11, // greater
+    INT_MAX - 10, // lesser
+    INT_MAX - 9,  // and
+    INT_MAX - 8,  // or
+    INT_MAX - 7,  // write
+    INT_MAX - 6,  // read
+    INT_MAX - 5,  // context
+    INT_MAX - 4,  // stack
+    INT_MAX - 3,  // code
+    INT_MAX - 2,  // bypass
+    INT_MAX - 1,  // word_size
+    INT_MAX - 0,  // string
+};
+
 
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
 
@@ -453,50 +507,6 @@ static inline void* urb_alloc(List* arena, size_t size)
     return ptr;
 }
 
-static inline Value urb_token_preprocess(char* token)
-{
-    if(token[1] == 'b')
-    {
-        return((Value){.i = strtol(token + 2, NULL, 2)});
-    }
-    else if(token[1] == 'x')
-    {
-        return((Value){.i = strtol(token + 2, NULL, 16)});
-    }
-    else if(token[1] == 'o')
-    {
-        return((Value){.i = strtol(token + 2, NULL, 8)});
-    }
-    else if(strchr(token, 'f'))
-    {
-        return((Value){.f = strtod(token, NULL)});
-    }
-    else if(strchr(token, 'u'))
-    {
-        return((Value){.i = ALIAS_BYPASS});
-        return((Value){.u = strtoul(token, NULL, 10)});
-    }
-    else
-    {
-        return((Value){.u = strtol(token, NULL, 10)});
-    }
-}
-
-static inline List* urb_preprocess(char* input_str)
-{
-    List* code = urb_new(URB_DEFAULT_SIZE);
-
-    // Duplicate the input string to avoid modifying the original
-    char* token = strtok(input_str, "\n\t \r");
-    
-    while (token != NULL)
-    {
-        urb_push(code, urb_token_preprocess(token));
-        token = strtok(NULL, "\n\t \r");
-    }
-    return code;
-}
-
 // if you want to return something, pass a stack, values will be there
 // if you do not provide a stack, a new one will be created and freed at the end
 static inline void urb_interpret(List *context, List* code, List* _stack)
@@ -533,9 +543,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     list->data[index].fn(stack);
                 }
                 break;
-                case OP_CALLIST:
-                    urb_interpret(context, urb_pop(stack).p, stack);
-                break;
                 case OP_NEW:
                     urb_push(stack, (Value){.p = urb_new(URB_DEFAULT_SIZE)});
                 break;
@@ -560,20 +567,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                 case OP_SHIFT:
                     urb_push(stack, urb_shift(urb_pop(stack).p));
                 break;
-                case OP_INSERT:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    urb_insert(list, index, urb_pop(stack));
-                }
-                break;
-                case OP_REMOVE:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    urb_push(stack, urb_remove(list, index));
-                }
-                break;
                 case OP_SWAP:
                 {
                     List* list = urb_pop(stack).p;
@@ -596,19 +589,9 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, urb_get(list, index));
                 }
                 break;
-                case OP_COPY:
-                    urb_push(stack, (Value){.p = urb_copy(urb_pop(stack).p)});
-                break;
                 case OP_LENGTH:
                     urb_push(stack, (Value){.i = ((List*)urb_pop(stack).p)->size});
                 break;
-                case OP_DOUBLE:
-                    urb_double((List*)urb_pop(stack).p);
-                break;
-                case OP_HALF:
-                    urb_half((List*)urb_pop(stack).p);
-                break;
-
                 // stack ops
                 case OP_DUP:
                 {
@@ -657,26 +640,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = a ^ b});
                 }
                 break;
-                case OP_BIT_LS:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a << b});
-                }
-                break;
-                case OP_BIT_RS:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a >> b});
-                }
-                break;
-                case OP_BIT_NOT:
-                {
-                    Int a = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = ~a});
-                }
-                break;
 
                 // cond ops
                 case OP_EQUALS:
@@ -686,13 +649,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = a == b});
                 }
                 break;
-                case OP_NOT_EQUALS:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a != b});
-                }
-                break;
                 case OP_GREATER:
                 {
                     Int a = urb_pop(stack).i;
@@ -700,25 +656,11 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = a > b});
                 }
                 break;
-                case OP_GREATER_OR_EQUAL:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a >= b});
-                }
-                break;
                 case OP_LESSER:
                 {
                     Int a = urb_pop(stack).i;
                     Int b = urb_pop(stack).i;
                     urb_push(stack, (Value){.i = a < b});
-                }
-                break;
-                case OP_LESSER_OR_EQUAL:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a <= b});
                 }
                 break;
                 case OP_AND:
@@ -767,6 +709,9 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                 break;
                 case ALIAS_WORD_SIZE:
                     urb_push(stack, (Value){.i = sizeof(Int)});
+                break;
+                case ALIAS_STRING:
+                    urb_push(stack, (Value){.p = &code->data[i + 1]});
                 break;
 
                 default:

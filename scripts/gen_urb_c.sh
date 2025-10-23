@@ -13,17 +13,20 @@ interpreter_c="build/urb.c"
 mapfile -t output < <(scripts/extract_funcs.sh "$@")
 tmp_c="${output[0]}"
 funcs=("${output[@]:1}")
-
 {
     echo "typedef struct List List;"
     echo "typedef union Value Value;"
     echo "typedef void (*Function)(List *stack);"
     echo
+
+    # declarações das funções
     for f in "${funcs[@]}"; do
         real_name="${f##*:}"
         echo "void $real_name(List* stack);"
     done
     echo
+
+    # INIT_URB
     echo "#define INIT_URB(context) \\"
     for f in "${funcs[@]}"; do
         real_name="${f##*:}"
@@ -31,8 +34,31 @@ funcs=("${output[@]:1}")
     done
     echo "    ((void)0)"
     echo
+
+    # array de nomes
+    echo "static const char *custom_func_names[] = {"
+    for f in "${funcs[@]}"; do
+        real_name="${f##*:}"
+        echo "    \"$real_name\","
+    done
+    echo "};"
+    echo
+
+    # array de índices
+    echo "static const int custom_func_indexes[] = {"
+    for i in "${!funcs[@]}"; do
+        echo "    $i,"
+    done
+    echo "};"
+    echo
+
+    # define com a quantidade de funções custom
+    echo "#define CUSTOM_FUNC_COUNT ${#funcs[@]}"
+    echo
+
     cat "$tmp_c"
     echo
 } > "$interpreter_c"
+
 
 rm -f "$tmp_c"

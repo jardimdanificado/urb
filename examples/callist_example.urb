@@ -1,18 +1,2 @@
-#include "../build/dictionary.h"
-#include "../lib/syntax.h"
-
-// create a procedure and
-// push it to the context
-push(CONTEXT, call(pack, 4, 123, print, bypass(CONTEXT), bypass(CALL)))
-
-// call the procedure
-callist(get(CONTEXT, -1))
-
-// call println
-call(println)
-
-free(get(CONTEXT, -1))
-
-// you can also do every thing in one line
-// note that we do p
-// free(get(CONTEXT, -1), call(println, callist(push(CONTEXT, dup(call(pack, 4, 123, print, bypass(CONTEXT), bypass(CALL)))))))
+123 print context call
+println context call
