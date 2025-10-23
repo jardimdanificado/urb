@@ -64,174 +64,96 @@ char* str_nduplicate(const char *str, Int n)
     dup[n] = '\0';
     return dup;
 }
-
-char* str_sub(const char *str, Int start, Int end)
-{
-    char *sub = (char*)malloc(end - start + 1);
-    for (Int i = start; i < end; i++)
-    {
-        sub[i - start] = str[i];
-    }
-    sub[end - start] = '\0';
-    return sub;
-}
-
-char* str_format(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    Int size = vsnprintf(NULL, 0, format, args);
-    va_end(args);
-    char *str = (char*)malloc(size + 1);
-    va_start(args, format);
-    vsprintf(str, format, args);
-    va_end(args);
-    return str;
-}
-
-char* str_concat(const char *str1, const char *str2)
-{
-    char *str = (char*)malloc(strlen(str1) + strlen(str2) + 1);
-    strcpy(str, str1);
-    strcat(str, str2);
-    return str;
-}
-
-char* str_replace(const char *str, const char *substr, const char *replacement)
-{
-    const char *pos = strstr(str, substr); // Localiza a primeira ocorrência de 'substr'
-    if (!pos)
-    {
-        // Se não encontrou, retorna uma cópia da string original
-        char *newstr = (char *)malloc(strlen(str) + 1);
-        strcpy(newstr, str);
-        return newstr;
-    }
-
-    // Calcula os tamanhos
-    size_t len_before = pos - str;
-    size_t substr_len = strlen(substr);
-    size_t replacement_len = strlen(replacement);
-    size_t new_len = strlen(str) - substr_len + replacement_len;
-
-    // Aloca memória para a nova string
-    char *newstr = (char *)malloc(new_len + 1);
-
-    // Constrói a nova string
-    strncpy(newstr, str, len_before); // Parte antes da substring
-    strcpy(newstr + len_before, replacement); // Substituição
-    strcpy(newstr + len_before + replacement_len, pos + substr_len); // Parte após a substring
-
-    return newstr;
-}
-
-
-char* str_replace_all(const char *str, const char *substr, const char *replacement)
-{
-    size_t substr_len = strlen(substr);
-    size_t replacement_len = strlen(replacement);
-
-    // Contar substrings e calcular tamanho necessário em uma única passagem
-    size_t new_len = 0;
-    size_t count = 0;
-    for (const char *p = strstr(str, substr); p; p = strstr(p + substr_len, substr))
-    {
-        count++;
-        new_len += (p - str) - new_len; // Adiciona a parte antes da substring
-        new_len += replacement_len;    // Adiciona o tamanho da substituição
-        str = p + substr_len;          // Avança para o próximo trecho
-    }
-    new_len += strlen(str); // Adiciona o restante da string
-
-    // Aloca memória para a nova string
-    char *newstr = (char *)malloc(new_len + 1);
-    char *dest = newstr;
-
-    // Construir a nova string
-    str = str - new_len + strlen(newstr); // Reiniciar ponteiro para o início da string original
-    const char *p = strstr(str, substr);
-    while (p)
-    {
-        size_t len_before = p - str;
-        strncpy(dest, str, len_before);    // Copiar parte antes da substring
-        dest += len_before;
-
-        strcpy(dest, replacement);        // Copiar substituição
-        dest += replacement_len;
-
-        str = p + substr_len;             // Avançar na string original
-        p = strstr(str, substr);
-    }
-    strcpy(dest, str);                    // Copiar o restante da string original
-
-    return newstr;
-}
-
-
-Int str_find(const char *str, const char *substr)
-{
-    return strstr(str, substr) - str;
-}
-
 List* special_space_split(char *str)
 {
     List *splited = urb_new(URB_DEFAULT_SIZE);
-    
+
     int i = 0;
     while (str[i] != '\0')
     {
-        if (str[i] == '(')
+        // --- Blocos delimitados: (), {}, [], <>
+        if (str[i] == '(' || str[i] == '[' || str[i] == '{' || str[i] == '<')
         {
             int j = i;
-            int count = 1;
-            while (count != 0)
+            char stack[256];
+            int top = 0;
+            stack[top++] = str[i]; // empilha delimitador inicial
+
+            j++;
+            while (str[j] != '\0' && top > 0)
             {
+                char c = str[j];
+                char last = stack[top - 1];
+
+                if (c == '(' || c == '[' || c == '{' || c == '<')
+                {
+                    if (top < 256)
+                        stack[top++] = c;
+                }
+                else if ((c == ')' && last == '(') ||
+                         (c == ']' && last == '[') ||
+                         (c == '}' && last == '{') ||
+                         (c == '>' && last == '<'))
+                {
+                    top--;
+                }
                 j++;
-                if (str[j] == '(')
-                {
-                    count++;
-                }
-                else if (str[j] == ')')
-                {
-                    count--;
-                }
             }
-            char *tmp = str_nduplicate(str + i, j - i + 1);
-            urb_push(splited, (Value){.p = tmp});
-            i = j + 1;
+
+            if (top == 0)
+            {
+                // delimitadores equilibrados
+                char *tmp = str_nduplicate(str + i, j - i);
+                urb_push(splited, (Value){.p = tmp});
+                i = j;
+                continue;
+            }
+            else
+            {
+                // erro de fechamento, apenas duplica o resto
+                char *tmp = str_duplicate(str + i);
+                urb_push(splited, (Value){.p = tmp});
+                break;
+            }
         }
+        // --- Strings duplas
         else if (str[i] == '"')
         {
-            int j = i;
-            j++;  // Avança para depois da abertura de aspas duplas
-            while (str[j] != '"' && str[j] != '\0')
-            {
+            int j = i + 1;
+            while (str[j] != '\0' && str[j] != '"')
                 j++;
-            }
-            char *tmp = str_nduplicate(str + i, j - i + 1);
-            urb_push(splited, (Value){.p = tmp});
-            i = j + 1;  // Avança para após o fechamento de aspas duplas
+            if (str[j] == '"')
+                j++;
+            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
+            i = j;
         }
+        // --- Strings simples
         else if (str[i] == '\'')
         {
-            int j = i;
-            j++;  // Avança para depois da abertura de aspas simples
-            while (str[j] != '\'' && str[j] != '\0')
-            {
+            int j = i + 1;
+            while (str[j] != '\0' && str[j] != '\'')
                 j++;
-            }
-            char *tmp = str_nduplicate(str + i, j - i + 1);
-            urb_push(splited, (Value){.p = tmp});
-            i = j + 1;  // Avança para após o fechamento de aspas simples
+            if (str[j] == '\'')
+                j++;
+            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
+            i = j;
         }
-        else if (isspace(str[i]))
+        // --- Espaços
+        else if (isspace((unsigned char)str[i]))
         {
             i++;
         }
+        // --- Tokens normais
         else
         {
             int j = i;
-            while (!isspace(str[j]) && str[j] != '\0' && str[j] != '(' && str[j] != ')' && str[j] != '"' && str[j] != '\'')
+            while (str[j] != '\0' &&
+                   !isspace((unsigned char)str[j]) &&
+                   str[j] != '(' && str[j] != ')' &&
+                   str[j] != '[' && str[j] != ']' &&
+                   str[j] != '{' && str[j] != '}' &&
+                   str[j] != '<' && str[j] != '>' &&
+                   str[j] != '"' && str[j] != '\'')
             {
                 j++;
             }
@@ -239,8 +161,10 @@ List* special_space_split(char *str)
             i = j;
         }
     }
+
     return splited;
 }
+
 
 static inline List* urb_preprocess(char* input_str)
 {
