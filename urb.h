@@ -149,12 +149,13 @@ enum {
 
     // math opcodes
     OP_ADD,
-    OP_SUB,
+    OP_LSHIFT,
+    OP_RSHIFT,
     OP_BIT_AND,
     OP_BIT_OR,
     OP_BIT_XOR,
     
-    // cmp opcoddes
+    // cmp opcodes
     OP_EQUALS,
     OP_GREATER,
     OP_LESSER,
@@ -171,7 +172,6 @@ enum {
     ALIAS_CODE,
     ALIAS_BYPASS,
     ALIAS_WORD_SIZE,
-    ALIAS_STRING,
 };
 
 
@@ -191,7 +191,8 @@ static const char *op_names[] = {
     "dup",
     "drop",
     "add",
-    "sub",
+    "lshift",
+    "rshift",
     "bit_and",
     "bit_or",
     "bit_xor",
@@ -207,8 +208,8 @@ static const char *op_names[] = {
     "code",
     "bypass",
     "word_size",
-    "string",
 };
+
 
 static const Int op_values[] = {
     INT_MAX - 31, // jumpif
@@ -226,23 +227,23 @@ static const Int op_values[] = {
     INT_MAX - 19, // dup
     INT_MAX - 18, // drop
     INT_MAX - 17, // add
-    INT_MAX - 16, // sub
-    INT_MAX - 15, // bit_and
-    INT_MAX - 14, // bit_or
-    INT_MAX - 13, // bit_xor
-    INT_MAX - 12, // equals
-    INT_MAX - 11, // greater
-    INT_MAX - 10, // lesser
-    INT_MAX - 9,  // and
-    INT_MAX - 8,  // or
-    INT_MAX - 7,  // write
-    INT_MAX - 6,  // read
-    INT_MAX - 5,  // context
-    INT_MAX - 4,  // stack
-    INT_MAX - 3,  // code
-    INT_MAX - 2,  // bypass
-    INT_MAX - 1,  // word_size
-    INT_MAX - 0,  // string
+    INT_MAX - 16, // lshift
+    INT_MAX - 15, // rshift
+    INT_MAX - 14, // bit_and
+    INT_MAX - 13, // bit_or
+    INT_MAX - 12, // bit_xor
+    INT_MAX - 11, // equals
+    INT_MAX - 10, // greater
+    INT_MAX - 9,  // lesser
+    INT_MAX - 8,  // and
+    INT_MAX - 7,  // or
+    INT_MAX - 6,  // write
+    INT_MAX - 5,  // read
+    INT_MAX - 4,  // context
+    INT_MAX - 3,  // stack
+    INT_MAX - 2,  // code
+    INT_MAX - 1,  // bypass
+    INT_MAX - 0,  // word_size
 };
 
 
@@ -612,11 +613,18 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = a + b});
                 }
                 break;
-                case OP_SUB:
+                case OP_LSHIFT:
                 {
                     Int a = urb_pop(stack).i;
                     Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a - b});
+                    urb_push(stack, (Value){.i = a << b});
+                }
+                break;
+                case OP_RSHIFT:
+                {
+                    Int a = urb_pop(stack).i;
+                    Int b = urb_pop(stack).i;
+                    urb_push(stack, (Value){.i = a >> b});
                 }
                 break;
                 case OP_BIT_AND:
@@ -709,8 +717,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                 break;
                 case ALIAS_WORD_SIZE:
                     urb_push(stack, (Value){.i = sizeof(Int)});
-                break;
-                case ALIAS_STRING:
                 break;
 
                 default:

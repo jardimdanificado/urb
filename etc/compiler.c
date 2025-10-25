@@ -64,6 +64,7 @@ char* str_nduplicate(const char *str, Int n)
     dup[n] = '\0';
     return dup;
 }
+
 List* special_space_split(char *str)
 {
     List *splited = urb_new(URB_DEFAULT_SIZE);
@@ -116,7 +117,7 @@ List* special_space_split(char *str)
                 break;
             }
         }
-        // --- Strings duplas
+        // --- string
         else if (str[i] == '"')
         {
             int j = i + 1;
@@ -127,7 +128,7 @@ List* special_space_split(char *str)
             urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
             i = j;
         }
-        // --- Strings simples
+        // --- char
         else if (str[i] == '\'')
         {
             int j = i + 1;
@@ -138,12 +139,12 @@ List* special_space_split(char *str)
             urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
             i = j;
         }
-        // --- Espaços
+        // --- space
         else if (isspace((unsigned char)str[i]))
         {
             i++;
         }
-        // --- Tokens normais
+        // --- regular tokens
         else
         {
             int j = i;
@@ -229,9 +230,25 @@ static inline List* urb_preprocess(char* input_str)
                     urb_push(code, (Value){.u = strtol(token, NULL, 10)});
                 }
             break;
+            
+            // char
             case '\'':
             {
                 urb_push(code, (Value){.u = token[1]});
+            }
+            break;
+
+            case '(':
+            {
+                char* content = token + 1;
+                token[strlen(token)-1] = 0;
+                List* processed_content = urb_preprocess(content);
+                while(processed_content->size > 0)
+                {
+                    urb_push(code, urb_pop(processed_content));
+                }
+                urb_push(code, (Value){.i = ALIAS_CONTEXT});
+                urb_push(code, (Value){.i = OP_CALL});
             }
             break;
 
