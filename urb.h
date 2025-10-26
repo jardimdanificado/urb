@@ -351,7 +351,7 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
     // interpreting
     for (Int i = 0; i < code->size; i++)
     {
-        if(code->data[i].i >= INT_MAX - 31)
+        if(code->data[i].i >= INT_MAX - 15)
         {
             switch(code->data[i].i)
             {
@@ -433,6 +433,9 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                 break;
                 case ALIAS_CODE:
                     urb_push(stack, (Value){.p = code});
+                break;
+                case ALIAS_NULL:
+                    urb_push(stack, (Value){.i = ALIAS_NULL});
                 break;
 
                 default:
