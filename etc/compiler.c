@@ -166,25 +166,10 @@ List* special_space_split(char *str)
     return splited;
 }
 
-
 static inline List* urb_preprocess(char* input_str)
 {
     List* code = urb_new(URB_DEFAULT_SIZE);
-    List* label_values = urb_new(URB_DEFAULT_SIZE);
-    List* label_names = urb_new(URB_DEFAULT_SIZE);
     List* tokens = special_space_split(input_str);
-    for(UInt i = 0; i < tokens->size; i++)
-    {
-        char* token = tokens->data[i].p;
-        if(strchr(token, ':'))
-        {
-            token[strlen(token)-1] = 0;
-            urb_push(label_names, (Value){.p = token});
-            urb_push(label_values, (Value){.u = i});
-            urb_remove(tokens, i);
-            i--;
-        }
-    }
 
     for(UInt i = 0; i < tokens->size; i++)
     {
@@ -220,11 +205,6 @@ static inline List* urb_preprocess(char* input_str)
                 {
                     urb_push(code, (Value){.f = strtod(token, NULL)});
                 }
-                else if(strchr(token, 'u'))
-                {
-                    urb_push(code, (Value){.i = ALIAS_BYPASS});
-                    urb_push(code, (Value){.u = strtoul(token, NULL, 10)});
-                }
                 else
                 {
                     urb_push(code, (Value){.u = strtol(token, NULL, 10)});
@@ -255,7 +235,7 @@ static inline List* urb_preprocess(char* input_str)
             default:
             {
                 bool found = 0;
-                for(UInt j = 0; j < 32; j++)
+                for(UInt j = 0; j < 16; j++)
                 {
                     if(strcmp(token, op_names[j]) == 0)
                     {
@@ -276,25 +256,11 @@ static inline List* urb_preprocess(char* input_str)
                         }
                     }
                 }
-                if (!found)
-                {
-                    for(UInt j = 0; j < label_names->size; j++)
-                    {
-                        if(strcmp(token, label_names->data[j].p) == 0)
-                        {
-                            urb_push(code, (Value){.i = label_values->data[j].i});
-                            found = true;
-                            break;
-                        }
-                    }
-                }
             }
             break;
         }
         free(token);
     }
-    urb_free(label_names);
-    urb_free(label_values);
     return code;
 }
 

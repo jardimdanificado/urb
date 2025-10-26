@@ -83,8 +83,6 @@ struct List
 // List functions   
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
 static inline List*              urb_new(Int size);
-// create a new list from a pointer
-static inline List*              urb_from_raw(void* ptr, Int size);
 // free the list    
 static inline void               urb_free(List *list);
 // double the list capacity   
@@ -103,149 +101,69 @@ static inline Value              urb_pop(List *list);
 static inline Value              urb_shift(List *list);
 // remove and return the value at index i in the list, shifting the rest of the list
 static inline Value              urb_remove(List *list, Int i);
-// fast remove a value at index i in the list, swapping it with the last element and popping it
-static inline Value              urb_fast_remove(List *list, Int i);
-// swap two values in the list at indices i1 and i2
-static inline void               urb_swap(List *list, Int i1, Int i2);
-// find the index of a value in the list, returns -1 if not found
-static inline Int                urb_find(const List *list, Value value);
-// reverse the list in place   
-static inline void               urb_reverse(List *list);
-// create a copy of the list, with the same capacity and size, but new data array
+// resize
+static inline List*              urb_resize(List *list, Int new_size);
+// copy
 static inline List*              urb_copy(const List *list);
-// get a value at index i in the list, returns a value with i set to -1 if index is out of range
-static inline Value              urb_get(const List *list, Int i);
-// set a value at index i in the list, if index is out of range, it will print an error and exit
-static inline void               urb_set(List *list, Int i, Value value);
-// get the ub version   
-static inline const char*        urb_get_version(void);
-// arena   
-static inline void*              urb_alloc(List *arena, size_t size);
 // ub representation
 static inline void               urb_interpret(List *context, List* code, List* stack);
 
-// if adding new opcodes and using the experimental debug system
-// be sure to register the opcodes in scripts/opcodes.h too
 enum {
-    // code opcodes
-    OP_JUMPIF = INT_MAX - 31,
-    
-    // list opcodes
-    OP_CALL,
-    OP_NEW,
-    OP_FREE,
-    OP_PUSH,
-    OP_POP,
-    OP_UNSHIFT,
-    OP_SHIFT,
-    OP_SWAP,
-    OP_SET,
-    OP_GET,
-    OP_LENGTH,
-    
-    // stack ops
-    OP_DUP,
-    OP_DROP,
-
-    // math opcodes
-    OP_ADD,
+    OP_CALL   = INT_MAX - 15,
+    OP_MUTE,
+    OP_COPY,
+    OP_RESIZE,
+    OP_INSERT,
+    OP_REMOVE,
+    OP_LEN,
     OP_LSHIFT,
     OP_RSHIFT,
-    OP_BIT_AND,
-    OP_BIT_OR,
-    OP_BIT_XOR,
-    
-    // cmp opcodes
-    OP_EQUALS,
-    OP_GREATER,
-    OP_LESSER,
-    OP_AND,
-    OP_OR,
-    
-    // buffer opcodes
-    OP_WRITE,
-    OP_READ,
-
-    // alias
+    OP_BAND,
+    OP_BOR,
+    OP_BXOR,
     ALIAS_CONTEXT,
     ALIAS_STACK,
     ALIAS_CODE,
-    ALIAS_BYPASS,
-    ALIAS_WORD_SIZE,
+    ALIAS_NULL,
 };
 
-
 static const char *op_names[] = {
-    "jumpif",
     "call",
-    "new",
-    "free",
-    "push",
-    "pop",
-    "unshift",
-    "shift",
-    "swap",
-    "set",
-    "get",
-    "length",
-    "dup",
-    "drop",
-    "add",
+    "mute",
+    "copy",
+    "resize",
+    "insert",
+    "remove",
+    "len",
     "lshift",
     "rshift",
-    "bit_and",
-    "bit_or",
-    "bit_xor",
-    "equals",
-    "greater",
-    "lesser",
-    "and",
-    "or",
-    "write",
-    "read",
+    "band",
+    "bor",
+    "bxor",
     "context",
     "stack",
     "code",
-    "bypass",
-    "word_size",
+    "null",
 };
-
 
 static const Int op_values[] = {
-    INT_MAX - 31, // jumpif
-    INT_MAX - 30, // call
-    INT_MAX - 29, // new
-    INT_MAX - 28, // free
-    INT_MAX - 27, // push
-    INT_MAX - 26, // pop
-    INT_MAX - 25, // unshift
-    INT_MAX - 24, // shift
-    INT_MAX - 23, // swap
-    INT_MAX - 22, // set
-    INT_MAX - 21, // get
-    INT_MAX - 20, // length
-    INT_MAX - 19, // dup
-    INT_MAX - 18, // drop
-    INT_MAX - 17, // add
-    INT_MAX - 16, // lshift
-    INT_MAX - 15, // rshift
-    INT_MAX - 14, // bit_and
-    INT_MAX - 13, // bit_or
-    INT_MAX - 12, // bit_xor
-    INT_MAX - 11, // equals
-    INT_MAX - 10, // greater
-    INT_MAX - 9,  // lesser
-    INT_MAX - 8,  // and
-    INT_MAX - 7,  // or
-    INT_MAX - 6,  // write
-    INT_MAX - 5,  // read
-    INT_MAX - 4,  // context
-    INT_MAX - 3,  // stack
-    INT_MAX - 2,  // code
-    INT_MAX - 1,  // bypass
-    INT_MAX - 0,  // word_size
+    INT_MAX - 15, // call
+    INT_MAX - 14, // mute
+    INT_MAX - 13, // copy
+    INT_MAX - 12, // resize
+    INT_MAX - 11, // insert
+    INT_MAX - 10, // remove
+    INT_MAX - 9,  // len
+    INT_MAX - 8,  // lshift
+    INT_MAX - 7,  // rshift
+    INT_MAX - 6,  // band
+    INT_MAX - 5,  // bor
+    INT_MAX - 4,  // bxor
+    INT_MAX - 3,  // context
+    INT_MAX - 2,  // stack
+    INT_MAX - 1,  // code
+    INT_MAX - 0,  // null
 };
-
 
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
 
@@ -257,31 +175,10 @@ static const Int op_values[] = {
 static inline List *urb_new(Int size)
 {
     List *list = (List*)malloc(sizeof(List));
-    
-    if (list == NULL)
-    {
-        printf("URB_ERROR: failed to allocate memory for List\n");
-        exit(EXIT_FAILURE);
-    }
-    
     list->data = (size == 0) ? NULL : (Value*)malloc((size_t)size * sizeof(Value));
-    
-    if (size > 0 && list->data == NULL)
-    {
-        printf("URB_ERROR: failed to allocate memory for List data\n");
-        exit(EXIT_FAILURE);
-    }
-    
     list->size = 0;
     list->capacity = size;
 
-    return list;
-}
-
-static inline List *urb_from_raw(void* ptr, Int capacity)
-{
-    List *list = urb_new(capacity);
-    memcpy(list->data, ptr, capacity * sizeof(Int));
     return list;
 }
 
@@ -293,41 +190,25 @@ static inline void urb_free(List *list)
 
 static inline void urb_double(List *list)
 {
-    Value *new_data = NULL;
     list->capacity = list->capacity == 0 ? 1 : list->capacity * 2;
-    new_data = (Value*)realloc(list->data, (size_t)list->capacity * sizeof(Value));
-    if (!new_data)
-    {
-        printf("URB_ERROR: failed to reallocate list data\n");
-        exit(EXIT_FAILURE);
-    }
+    Value *new_data = (Value*)realloc(list->data, (size_t)list->capacity * sizeof(Value));
     list->data = new_data;
 }
 
 static inline void urb_half(List *list)
 {
-    Value *new_data = NULL;
     list->capacity /= 2;
-    new_data = (Value*)realloc(list->data, (size_t)list->capacity * sizeof(Value));
-    if (!new_data)
-    {
-        printf("URB_ERROR: failed to reallocate list data\n");
-        exit(EXIT_FAILURE);
-    }
+    Value *new_data = (Value*)realloc(list->data, (size_t)list->capacity * sizeof(Value));
     list->data = new_data;
 
     if (list->size > list->capacity)
-    {
         list->size = list->capacity;
-    }
 }
 
 static inline void urb_push(List *list, Value value)
 {
     if (list->size == list->capacity)
-    {
         urb_double(list);
-    }
     list->data[list->size] = value;
     list->size++;
 }
@@ -335,120 +216,72 @@ static inline void urb_push(List *list, Value value)
 static inline void urb_unshift(List *list, Value value)
 {
     if (list->size == list->capacity)
-    {
         urb_double(list);
-    }
     memmove(&(list->data[1]), &(list->data[0]), (size_t)list->size * sizeof(Value));
     list->data[0] = value;
 
     list->size++;
 }
 
-static inline void urb_insert(List *list, Int i, Value value)
+static inline void urb_insert(List *list, Int index, Value value)
 {
+    Int original_index = index;
     if (list->size == list->capacity)
-    {
         urb_double(list);
-    }
 
-    i = INDEX_CYCLE(i);
-
-    if (i < 0 || i > list->size)
+    index = INDEX_CYCLE(index);
+    
+    switch(original_index)
     {
-        printf("URB_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR " \n", i, list->size);
-        exit(EXIT_FAILURE);
-    }
-    else
-    {
-        memmove(&(list->data[i + 1]), &(list->data[i]), (size_t)(list->size - i) * sizeof(Value));
-        list->data[i] = value;
-        list->size++;
+        case -1:
+            urb_push(list, value);
+        break;
+        case 0:
+            urb_unshift(list, value);
+        break;
+        default:
+            memmove(&(list->data[index + 1]), &(list->data[index]), (size_t)(list->size - index) * sizeof(Value));
+            list->data[index] = value;
+            list->size++;
+        break;
     }
 }
 
 static inline Value urb_pop(List *list)
 {
-    Value ret = list->data[list->size - 1];
-    if (list->size == 0)
-    {
-        printf("URB_ERROR: cannot pop from empty list\n");
-        exit(EXIT_FAILURE);
-    }
-    list->size--;
-    return ret;
+    return list->data[--list->size];
 }
 
 static inline Value urb_shift(List *list)
 {
     Value ret = list->data[0];
-    if (list->size == 0)
-    {
-        printf("URB_ERROR: cannot shift from empty list\n");
-        exit(EXIT_FAILURE);
-    }
-    else if (list->size > 1) 
-    { 
-        memmove(&(list->data[0]), &(list->data[1]), (size_t)(list->size - 1) * sizeof(Value)); 
-    } 
+    memmove(&(list->data[0]), &(list->data[1]), (size_t)(list->size - 1) * sizeof(Value)); 
     list->size--; 
     return ret;
 }
 
 static inline Value urb_remove(List *list, Int i)
 {
+    Int original_index = i;
     i = INDEX_CYCLE(i);
-    Value ret = list->data[i];
-
-    size_t elements_to_move = 0; 
-    if (list->size == 0)
-    {
-        printf("URB_ERROR: cannot pop from empty list\n");
-        exit(EXIT_FAILURE);
-    }
-    elements_to_move = (size_t)(list->size - (i) - 1); 
     
-    /* Move data elements */ 
-    memmove(&(list->data[i]), &(list->data[i + 1]), 
-            elements_to_move * sizeof(Value)); 
-    list->size--; 
-    
-    return ret;
-}
-
-static inline Value urb_fast_remove(List *list, Int i)
-{
-    i = INDEX_CYCLE(i);
-    urb_swap(list, i, list->size - 1);
-    return urb_pop(list);
-}
-
-static inline void urb_swap(List *list, Int i1, Int i2)
-{
-    i1 = INDEX_CYCLE(i1);
-    i2 = INDEX_CYCLE(i2);
-    Value tmp = list->data[i1];
-    list->data[i1] = list->data[i2];
-    list->data[i2] = tmp;
-}
-
-static inline Int urb_find(const List *list, Value value) 
-{
-    for (Int i = list->size - 1; i >= 0; i--)
+    switch(original_index)
     {
-        if (list->data[i].i == value.i)
+        case -1:
+            return urb_pop(list);
+        break;
+        case 0:
+            return urb_shift(list);
+        break;
+        default:
         {
-            return i;
+            Value ret = list->data[i];
+            Int elements_to_move = list->size - (i) - 1;
+            memmove(&(list->data[i]), &(list->data[i + 1]), elements_to_move * sizeof(Value)); 
+            list->size--; 
+            return ret;
         }
-    }
-
-    return -1;
-}
-
-static inline void urb_reverse(List *list)
-{
-    for (Int i = 0; i < list->size / 2; i++)
-    {
-        urb_swap(list, i, list->size - i - 1);
+        break;
     }
 }
 
@@ -469,43 +302,35 @@ static inline List* urb_copy(const List *list)
     return copy;
 }
 
-static inline Value urb_get(const List *list, Int i)
+static inline List* urb_resize(List *list, Int new_size)
 {
-    i = INDEX_CYCLE(i);
-    if (i < 0 || i >= list->size)
+    if(new_size < 0)
     {
-        return (Value){.i=-1}; // return -1 if index is out of range
+        urb_free(list);
+        return NULL;
     }
-    return list->data[i];
-}
-
-static inline void urb_set(List *list, Int i, Value value)
-{
-    i = INDEX_CYCLE(i);
-    if (i < 0 || i >= list->size)
+    else if(new_size == 0)
     {
-        printf("URB_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR " \n", i, list->size);
-        exit(EXIT_FAILURE);
+        free(list->data);
+        list->data = NULL;
+        list->capacity = 0;
     }
-    list->data[i] = value;
-}
-
-static inline const char* urb_get_version(void)
-{
-    return URB_VERSION;
-}
-
-static inline void* urb_alloc(List* arena, size_t size)
-{
-    size_t aligned_size = (size + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
-    // we use arena->size as offset
-    if (arena->size + aligned_size > arena->capacity)
+    else if(new_size < list->capacity/2)
     {
-        urb_double(arena);
+        while(new_size < list->capacity/2)
+        {
+            urb_half(list);
+        }
     }
-    void *ptr = arena->data + arena->size;
-    arena->size += aligned_size;
-    return ptr;
+    else if(new_size > list->capacity)
+    {
+        while(new_size > list->capacity)
+        {
+            urb_double(list);
+        }
+    }
+    list->size = new_size;
+    return list;
 }
 
 // if you want to return something, pass a stack, values will be there
@@ -526,16 +351,10 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
     // interpreting
     for (Int i = 0; i < code->size; i++)
     {
-        if(code->data[i].i >= INT_MAX - 127)
+        if(code->data[i].i >= INT_MAX - 31)
         {
             switch(code->data[i].i)
             {
-                // code ops
-                case OP_JUMPIF:
-                    i = (urb_pop(stack).i) ? urb_pop(stack).i : i;
-                break;
-
-                // list ops
                 case OP_CALL:
                 {
                     List* list = (List*)urb_pop(stack).p;
@@ -544,75 +363,43 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     list->data[index].fn(stack);
                 }
                 break;
-                case OP_NEW:
-                    urb_push(stack, (Value){.p = urb_new(URB_DEFAULT_SIZE)});
+                case OP_MUTE:
+                    for (; i < code->size; i++)
+                        if(code->data[i].u == OP_MUTE)
+                            break;
                 break;
-                case OP_FREE:
-                    urb_free(urb_pop(stack).p);
-                break;
-                case OP_PUSH:
+
+                // list ops
+                case OP_COPY:
+                    urb_push(stack, (Value){.p = urb_copy(urb_pop(stack).p)});
+                case OP_RESIZE:
                 {
                     List* list = urb_pop(stack).p;
-                    urb_push(list, urb_pop(stack));
+                    Int new_size = urb_pop(stack).i;
+                    urb_resize(list, new_size);
                 }
                 break;
-                case OP_POP:
-                    urb_push(stack, urb_pop(urb_pop(stack).p));
-                break;
-                case OP_UNSHIFT:
-                {
-                    List* list = urb_pop(stack).p;
-                    urb_unshift(list, urb_pop(stack));
-                }
-                break;
-                case OP_SHIFT:
-                    urb_push(stack, urb_shift(urb_pop(stack).p));
-                break;
-                case OP_SWAP:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index1 = urb_pop(stack).i;
-                    Int index2 = urb_pop(stack).i;
-                    urb_swap(list, index1, index2);
-                }
-                break;
-                case OP_SET:
+                case OP_INSERT:
                 {
                     List* list = urb_pop(stack).p;
                     Int index = urb_pop(stack).i;
-                    urb_set(list, index, urb_pop(stack));
+                    Value value = urb_pop(stack);
+                    urb_insert(list, index, value);
+                    if (list == stack && index == -1)
+                        urb_insert(list, index, value);
                 }
                 break;
-                case OP_GET:
+                case OP_REMOVE:
                 {
                     List* list = urb_pop(stack).p;
                     Int index = urb_pop(stack).i;
-                    urb_push(stack, urb_get(list, index));
+                    Value removed_value = urb_remove(list, index);
+                    if (list != stack && index == -1)
+                        urb_push(stack, removed_value);
                 }
-                break;
-                case OP_LENGTH:
-                    urb_push(stack, (Value){.i = ((List*)urb_pop(stack).p)->size});
-                break;
-                // stack ops
-                case OP_DUP:
-                {
-                    Value v = urb_pop(stack);
-                    urb_push(stack, v);
-                    urb_push(stack, v);
-                }
-                break;
-                case OP_DROP:
-                    urb_pop(stack);
                 break;
 
                 // math ops
-                case OP_ADD:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a + b});
-                }
-                break;
                 case OP_LSHIFT:
                 {
                     Int a = urb_pop(stack).i;
@@ -627,79 +414,14 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     urb_push(stack, (Value){.i = a >> b});
                 }
                 break;
-                case OP_BIT_AND:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a & b});
-                }
+                case OP_BAND:
+                    urb_push(stack, (Value){.i = urb_pop(stack).i & urb_pop(stack).i});
                 break;
-                case OP_BIT_OR:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a | b});
-                }
+                case OP_BOR:
+                    urb_push(stack, (Value){.i = urb_pop(stack).i | urb_pop(stack).i});
                 break;
-                case OP_BIT_XOR:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a ^ b});
-                }
-                break;
-
-                // cond ops
-                case OP_EQUALS:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a == b});
-                }
-                break;
-                case OP_GREATER:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a > b});
-                }
-                break;
-                case OP_LESSER:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a < b});
-                }
-                break;
-                case OP_AND:
-                    {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a && b});
-                }
-                break;
-                case OP_OR:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a || b});
-                }
-                break;
-
-                // byte ops
-                case OP_WRITE:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    ((uint8_t*)list->data)[index] = urb_pop(stack).i;
-                }
-                break;
-                case OP_READ:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = ((uint8_t*)list->data)[index]});
-                }
+                case OP_BXOR:
+                    urb_push(stack, (Value){.i = urb_pop(stack).i ^ urb_pop(stack).i});
                 break;
 
                 // aliases
@@ -711,12 +433,6 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                 break;
                 case ALIAS_CODE:
                     urb_push(stack, (Value){.p = code});
-                break;
-                case ALIAS_BYPASS:
-                    urb_push(stack, code->data[++i]);
-                break;
-                case ALIAS_WORD_SIZE:
-                    urb_push(stack, (Value){.i = sizeof(Int)});
                 break;
 
                 default:

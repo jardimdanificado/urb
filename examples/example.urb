@@ -1,8 +1,2 @@
-123 print a: context call
-println context c: call
-a print context call
-println context d: call
-c print context call
-println context call
-d print context call
+123 print context call
 println context call
