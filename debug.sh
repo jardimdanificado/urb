@@ -20,15 +20,11 @@ echo $LIBS
 gcc -o urbc etc/compiler.c -g -I. -Ibuild -lm
 gcc -o urb etc/interpreter.c -g -I. -Ibuild -lm
 
-# urbpp(urb preprocessor) essentially call to c preprocessor and
-# the result is passed to urbc using pipe
-# urbc deals with stdio only, receive its content from stdin, and output to stdout
-# its important to note that, the target script must include the dictionary himself
-#./scripts/urbpp.sh $SOURCE_FILE > build/temp.urbin
 
-./urbc $SOURCE_FILE > build/temp.urbin
+cpp -P $SOURCE_FILE > build/temp.urb
 
-# unlike urbc, the interpreter receive a filename
+./urbc build/temp.urb > build/temp.urbin
+
 # check valgrind-out.txt for the debug output
 valgrind \
           --leak-check=full \

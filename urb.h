@@ -110,7 +110,7 @@ static inline void               urb_interpret(List *context, List* code, List* 
 
 enum {
     OP_CALL   = INT_MAX - 15,
-    OP_MUTE,
+    OP_JIF,
     OP_COPY,
     OP_RESIZE,
     OP_INSERT,
@@ -129,7 +129,7 @@ enum {
 
 static const char *op_names[] = {
     "call",
-    "mute",
+    "jif",
     "copy",
     "resize",
     "insert",
@@ -148,7 +148,7 @@ static const char *op_names[] = {
 
 static const Int op_values[] = {
     INT_MAX - 15, // call
-    INT_MAX - 14, // mute
+    INT_MAX - 14, // jif
     INT_MAX - 13, // copy
     INT_MAX - 12, // resize
     INT_MAX - 11, // insert
@@ -363,10 +363,12 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     list->data[index].fn(stack);
                 }
                 break;
-                case OP_MUTE:
-                    for (; i < code->size; i++)
-                        if(code->data[i].u == OP_MUTE)
-                            break;
+                case OP_JIF:
+                {
+                    Int cond = urb_pop(stack).i;
+                    Int posit = urb_pop(stack).i - 1;
+                    i = cond ? posit : i;
+                }
                 break;
 
                 // list ops
@@ -377,6 +379,7 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     List* list = urb_pop(stack).p;
                     Int new_size = urb_pop(stack).i;
                     urb_resize(list, new_size);
+                    urb_push(stack, (Value){.p = list});
                 }
                 break;
                 case OP_INSERT:
@@ -397,6 +400,9 @@ static inline void urb_interpret(List *context, List* code, List* _stack)
                     if (list != stack && index == -1)
                         urb_push(stack, removed_value);
                 }
+                break;
+                case OP_LEN:
+                    urb_push(stack, (Value){.i = ((List*)urb_pop(stack).p)->size});
                 break;
 
                 // math ops

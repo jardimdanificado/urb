@@ -169,7 +169,22 @@ List* special_space_split(char *str)
 static inline List* urb_preprocess(char* input_str)
 {
     List* code = urb_new(URB_DEFAULT_SIZE);
+    List* label_values = urb_new(URB_DEFAULT_SIZE);
+    List* label_names = urb_new(URB_DEFAULT_SIZE);
     List* tokens = special_space_split(input_str);
+
+    for(UInt i = 0; i < tokens->size; i++)
+    {
+        char* token = tokens->data[i].p;
+        if(strchr(token, ':'))
+        {
+            token[strlen(token)-1] = 0;
+            urb_push(label_names, (Value){.p = token});
+            urb_push(label_values, (Value){.u = i});
+            urb_remove(tokens, i);
+            i--;
+        }
+    }
 
     for(UInt i = 0; i < tokens->size; i++)
     {
@@ -218,20 +233,6 @@ static inline List* urb_preprocess(char* input_str)
             }
             break;
 
-            case '(':
-            {
-                char* content = token + 1;
-                token[strlen(token)-1] = 0;
-                List* processed_content = urb_preprocess(content);
-                while(processed_content->size > 0)
-                {
-                    urb_push(code, urb_pop(processed_content));
-                }
-                urb_push(code, (Value){.i = ALIAS_CONTEXT});
-                urb_push(code, (Value){.i = OP_CALL});
-            }
-            break;
-
             default:
             {
                 bool found = 0;
@@ -244,6 +245,7 @@ static inline List* urb_preprocess(char* input_str)
                         break;
                     }
                 }
+
                 if (!found)
                 {
                     for(UInt j = 0; j < CUSTOM_FUNC_COUNT; j++)
@@ -251,6 +253,19 @@ static inline List* urb_preprocess(char* input_str)
                         if(strcmp(token, custom_func_names[j]) == 0)
                         {
                             urb_push(code, (Value){.i = custom_func_indexes[j]});
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found)
+                {
+                    for(UInt j = 0; j < label_names->size; j++)
+                    {
+                        if(strcmp(token, label_names->data[j].p) == 0)
+                        {
+                            urb_push(code, (Value){.i = label_values->data[j].i});
                             found = true;
                             break;
                         }
