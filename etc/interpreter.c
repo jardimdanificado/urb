@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     INIT_URB(context);
     if (fread(header, sizeof(Half), 2, file) != 2)
     {
-        fprintf(stderr, "error: this file is smaller than a urb header\n");
+        fprintf(stderr, "error: this file is empty\n");
         return 1;
     };
     

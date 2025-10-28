@@ -20,3 +20,6 @@ start:
 
     call(print, start)
     call(println)
+
+// list our code
+    call(ls, _code)

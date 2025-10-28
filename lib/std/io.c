@@ -32,22 +32,3 @@ void ls(List* stack)
         printf("[%ld] = %ld\n", i, list->data[i].i);
     }
 }
-
-void scan(List* stack)
-{
-    char buffer[1024];
-    if (fgets(buffer, sizeof(buffer), stdin) != NULL)
-    {
-        // Remove newline character if present
-        size_t len = strlen(buffer);
-        if (len > 0 && buffer[len - 1] == '\n')
-        {
-            buffer[len - 1] = '\0';
-        }
-        urb_push(stack, (Value){.p = strdup(buffer)});
-    }
-    else
-    {
-        urb_push(stack, (Value){.p = NULL});
-    }
-}
