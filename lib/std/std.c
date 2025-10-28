@@ -67,3 +67,9 @@ void URB_dup(List* stack)
 {
     urb_push(stack, stack->data[stack->size - 1]);
 }
+
+void URB_len(List* stack)
+{
+    List* list = urb_pop(stack).p;
+    urb_push(stack, (Value){.i = list->size});
+}
