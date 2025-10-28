@@ -109,11 +109,6 @@ static inline List*              urb_copy(const List *list);
 // ub representation
 static inline void               urb_interpret(List *exec, List* code, List* _stack, List* _mem);
 
-enum {
-    OP_CALL   = INT_MIN,
-    OP_JIF,
-};
-
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
 
 // functions implementations
@@ -323,7 +318,7 @@ static inline void urb_interpret(List *exec, List* code, List* _stack, List* _me
         }
         else if(code->data[i].i > INT_MAX - mem->size)
         {
-            urb_push(stack, code->data[INT_MAX - code->data[i].i]);
+            urb_push(stack, mem->data[INT_MAX - code->data[i].i]);
         }
         else 
         {
@@ -334,6 +329,11 @@ static inline void urb_interpret(List *exec, List* code, List* _stack, List* _me
     if (_stack == NULL) 
     {
         urb_free(stack); // free stack only if it was created here
+    }
+    
+    if (_mem == NULL) 
+    {
+        urb_free(mem); // free mem only if it was created here
     }
 }
 

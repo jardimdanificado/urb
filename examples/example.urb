@@ -9,10 +9,14 @@ local:
     a: 50
 
 start:
-    call(print, 123)
+    call(exec[2], 123)
     call(println)
-    call(print, local)
+    
+    call(print, call(get, _code, a))
     call(println)
+    
     call(print, start)
     call(println)
-goto(start)
+
+    call(print, start)
+    call(println)

@@ -27,3 +27,43 @@ void URB_unpack(List* stack)
         urb_push(stack, urb_pop(list));
     }
 }
+
+void URB_insert(List* stack)
+{
+    List* list = urb_pop(stack).p;
+    Int index = urb_pop(stack).i;
+    Value value = urb_pop(stack);
+    urb_insert(list, index, value);
+}
+
+void URB_remove(List* stack)
+{
+    List* list = urb_pop(stack).p;
+    Int index = urb_pop(stack).i;
+    urb_push(stack, urb_remove(list, index));
+}
+
+void URB_set(List* stack)
+{
+    List* list = urb_pop(stack).p;
+    Int index = urb_pop(stack).i;
+    Value value = urb_pop(stack);
+    list->data[index] = value;
+}
+
+void URB_get(List* stack)
+{
+    List* list = urb_pop(stack).p;
+    Int index = urb_pop(stack).i;
+    urb_push(stack, list->data[index]);
+}
+
+void URB_drop(List* stack)
+{
+    urb_pop(stack);
+}
+
+void URB_dup(List* stack)
+{
+    urb_push(stack, stack->data[stack->size - 1]);
+}

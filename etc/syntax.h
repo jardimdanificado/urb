@@ -1,5 +1,7 @@
-#define INT_MAX 9223372036854775807
-#define INT_MIN -9223372036854775807
+#define _exec  mem[0]
+#define _code  mem[1]
+#define _stack mem[2]
+#define _mem   mem[3]
 
 // we will limit args to 16
 #define REVERSE_1(a) a

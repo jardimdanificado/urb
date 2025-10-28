@@ -65,102 +65,17 @@ char* str_nduplicate(const char *str, Int n)
     return dup;
 }
 
-List* special_space_split(char *str)
+List* str_split(char *str, char *delim)
 {
     List *splited = urb_new(URB_DEFAULT_SIZE);
 
-    int i = 0;
-    while (str[i] != '\0')
+    char* newstring = strdup(str);
+    char* token = strtok(newstring, delim);
+
+    while (token != NULL)
     {
-        // --- Blocos delimitados: (), {}, [], <>
-        if (str[i] == '(' || str[i] == '[' || str[i] == '{' || str[i] == '<')
-        {
-            int j = i;
-            char stack[256];
-            int top = 0;
-            stack[top++] = str[i]; // empilha delimitador inicial
-
-            j++;
-            while (str[j] != '\0' && top > 0)
-            {
-                char c = str[j];
-                char last = stack[top - 1];
-
-                if (c == '(' || c == '[' || c == '{' || c == '<')
-                {
-                    if (top < 256)
-                        stack[top++] = c;
-                }
-                else if ((c == ')' && last == '(') ||
-                         (c == ']' && last == '[') ||
-                         (c == '}' && last == '{') ||
-                         (c == '>' && last == '<'))
-                {
-                    top--;
-                }
-                j++;
-            }
-
-            if (top == 0)
-            {
-                // delimitadores equilibrados
-                char *tmp = str_nduplicate(str + i, j - i);
-                urb_push(splited, (Value){.p = tmp});
-                i = j;
-                continue;
-            }
-            else
-            {
-                // erro de fechamento, apenas duplica o resto
-                char *tmp = str_duplicate(str + i);
-                urb_push(splited, (Value){.p = tmp});
-                break;
-            }
-        }
-        // --- string
-        else if (str[i] == '"')
-        {
-            int j = i + 1;
-            while (str[j] != '\0' && str[j] != '"')
-                j++;
-            if (str[j] == '"')
-                j++;
-            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
-            i = j;
-        }
-        // --- char
-        else if (str[i] == '\'')
-        {
-            int j = i + 1;
-            while (str[j] != '\0' && str[j] != '\'')
-                j++;
-            if (str[j] == '\'')
-                j++;
-            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
-            i = j;
-        }
-        // --- space
-        else if (isspace((unsigned char)str[i]))
-        {
-            i++;
-        }
-        // --- regular tokens
-        else
-        {
-            int j = i;
-            while (str[j] != '\0' &&
-                   !isspace((unsigned char)str[j]) &&
-                   str[j] != '(' && str[j] != ')' &&
-                   str[j] != '[' && str[j] != ']' &&
-                   str[j] != '{' && str[j] != '}' &&
-                   str[j] != '<' && str[j] != '>' &&
-                   str[j] != '"' && str[j] != '\'')
-            {
-                j++;
-            }
-            urb_push(splited, (Value){.p = str_nduplicate(str + i, j - i)});
-            i = j;
-        }
+        urb_push(splited, (Value){.p = str_duplicate(token)});
+        token = strtok(NULL, delim);
     }
 
     return splited;
@@ -171,7 +86,7 @@ static inline List* urb_preprocess(char* input_str)
     List* code = urb_new(URB_DEFAULT_SIZE);
     List* label_values = urb_new(URB_DEFAULT_SIZE);
     List* label_names = urb_new(URB_DEFAULT_SIZE);
-    List* tokens = special_space_split(input_str);
+    List* tokens = str_split(input_str, "\n\r \t");
 
     for(UInt i = 0; i < tokens->size; i++)
     {
@@ -235,6 +150,7 @@ static inline List* urb_preprocess(char* input_str)
 
             default:
             {
+                
                 bool found = 0;
                 for(UInt j = 0; j < CUSTOM_FUNC_COUNT; j++)
                 {
@@ -250,7 +166,16 @@ static inline List* urb_preprocess(char* input_str)
                 if(strcmp(token, "jif") == 0)
                 {
                     urb_push(code, (Value){.i = INT_MIN});
-                    found = true;
+                    break;
+                }
+                else if(strstr(token, "mem[") != NULL)
+                {
+                    urb_push(code, (Value){.i = INT_MAX - strtol(token + 4, NULL, 10)});
+                    break;
+                } 
+                else if(strstr(token, "exec[") != NULL)
+                {
+                    urb_push(code, (Value){.i = INT_MIN + strtol(token + 5, NULL, 10) + 1});
                     break;
                 }
 

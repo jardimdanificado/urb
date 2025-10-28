@@ -13,6 +13,7 @@ interpreter_c="build/urb.c"
 mapfile -t output < <(scripts/extract_funcs.sh "$@")
 tmp_c="${output[0]}"
 funcs=("${output[@]:1}")
+
 {
     echo "#include \"urb.h\""
     echo "typedef struct List List;"
@@ -36,11 +37,12 @@ funcs=("${output[@]:1}")
     echo "    ((void)0)"
     echo
 
-    # array de nomes
+    # array de nomes (sem prefixo URB_/urb_)
     echo "static const char *custom_func_names[] = {"
     for f in "${funcs[@]}"; do
         real_name="${f##*:}"
-        echo "    \"$real_name\","
+        clean_name=$(echo "$real_name" | sed -E 's/^[Uu][Rr][Bb]_//')
+        echo "    \"$clean_name\","
     done
     echo "};"
     echo
@@ -54,7 +56,6 @@ funcs=("${output[@]:1}")
     echo
 
     # array de opcodes baseados em INT_MIN + i
-    # a gente usa + 1 porque o INT_MIN é o operador de jump
     echo "static const Int custom_func_opcodes[] = {"
     for i in "${!funcs[@]}"; do
         echo "    (INT_MIN + 1 + $i),"
@@ -69,6 +70,5 @@ funcs=("${output[@]:1}")
     cat "$tmp_c"
     echo
 } > "$interpreter_c"
-
 
 rm -f "$tmp_c"
