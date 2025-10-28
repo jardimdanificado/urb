@@ -1,3 +1,6 @@
+#define INT_MAX 9223372036854775807
+#define INT_MIN -9223372036854775807
+
 // we will limit args to 16
 #define REVERSE_1(a) a
 #define REVERSE_2(a, b) b a
@@ -18,7 +21,7 @@
 #define GET_REVERSE_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, NAME, ...) NAME
 #define REVERSE(...) GET_REVERSE_MACRO(__VA_ARGS__, REVERSE_16, REVERSE_15, REVERSE_14, REVERSE_13, REVERSE_12, REVERSE_11, REVERSE_10, REVERSE_9, REVERSE_8, REVERSE_7, REVERSE_6, REVERSE_5, REVERSE_4, REVERSE_3, REVERSE_2, REVERSE_1)(__VA_ARGS__)
 
-#define call(a, ...) REVERSE(__VA_ARGS__) a context call
+#define call(a, ...) REVERSE(__VA_ARGS__) a
 
 #define jif(condition, position) position condition jif
 #define goto(position) position 1 jif

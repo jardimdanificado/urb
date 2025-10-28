@@ -236,41 +236,34 @@ static inline List* urb_preprocess(char* input_str)
             default:
             {
                 bool found = 0;
-                for(UInt j = 0; j < 16; j++)
+                for(UInt j = 0; j < CUSTOM_FUNC_COUNT; j++)
                 {
-                    if(strcmp(token, op_names[j]) == 0)
+                    if(strcmp(token, custom_func_names[j]) == 0)
                     {
-                        urb_push(code, (Value){.i = op_values[j]});
+                        urb_push(code, (Value){.i = custom_func_opcodes[j]});
                         found = true;
                         break;
                     }
                 }
+                if(found) break;
 
-                if (!found)
+                if(strcmp(token, "jif") == 0)
                 {
-                    for(UInt j = 0; j < CUSTOM_FUNC_COUNT; j++)
-                    {
-                        if(strcmp(token, custom_func_names[j]) == 0)
-                        {
-                            urb_push(code, (Value){.i = custom_func_indexes[j]});
-                            found = true;
-                            break;
-                        }
-                    }
+                    urb_push(code, (Value){.i = INT_MIN});
+                    found = true;
+                    break;
                 }
 
-                if (!found)
+                for(UInt j = 0; j < label_names->size; j++)
                 {
-                    for(UInt j = 0; j < label_names->size; j++)
+                    if(strcmp(token, label_names->data[j].p) == 0)
                     {
-                        if(strcmp(token, label_names->data[j].p) == 0)
-                        {
-                            urb_push(code, (Value){.i = label_values->data[j].i});
-                            found = true;
-                            break;
-                        }
+                        urb_push(code, (Value){.i = label_values->data[j].i});
+                        found = true;
+                        break;
                     }
                 }
+                if(found) break;
             }
             break;
         }

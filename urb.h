@@ -22,6 +22,7 @@ typedef uintptr_t UInt;
 
 // URB use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
 // URB use a union as universal type, and URB is able to manipulate and use pointers direcly so we need to use the pointer size;
+// note that int_min is -int_max instead -int_max-1
 #if INTPTR_MAX == INT64_MAX
     typedef double Float;
     typedef uint32_t UHalf;
@@ -106,63 +107,11 @@ static inline List*              urb_resize(List *list, Int new_size);
 // copy
 static inline List*              urb_copy(const List *list);
 // ub representation
-static inline void               urb_interpret(List *context, List* code, List* stack);
+static inline void               urb_interpret(List *exec, List* code, List* _stack, List* _mem);
 
 enum {
-    OP_CALL   = INT_MAX - 15,
+    OP_CALL   = INT_MIN,
     OP_JIF,
-    OP_COPY,
-    OP_RESIZE,
-    OP_INSERT,
-    OP_REMOVE,
-    OP_LEN,
-    OP_LSHIFT,
-    OP_RSHIFT,
-    OP_BAND,
-    OP_BOR,
-    OP_BXOR,
-    ALIAS_CONTEXT,
-    ALIAS_STACK,
-    ALIAS_CODE,
-    ALIAS_NULL,
-};
-
-static const char *op_names[] = {
-    "call",
-    "jif",
-    "copy",
-    "resize",
-    "insert",
-    "remove",
-    "len",
-    "lshift",
-    "rshift",
-    "band",
-    "bor",
-    "bxor",
-    "context",
-    "stack",
-    "code",
-    "null",
-};
-
-static const Int op_values[] = {
-    INT_MAX - 15, // call
-    INT_MAX - 14, // jif
-    INT_MAX - 13, // copy
-    INT_MAX - 12, // resize
-    INT_MAX - 11, // insert
-    INT_MAX - 10, // remove
-    INT_MAX - 9,  // len
-    INT_MAX - 8,  // lshift
-    INT_MAX - 7,  // rshift
-    INT_MAX - 6,  // band
-    INT_MAX - 5,  // bor
-    INT_MAX - 4,  // bxor
-    INT_MAX - 3,  // context
-    INT_MAX - 2,  // stack
-    INT_MAX - 1,  // code
-    INT_MAX - 0,  // null
 };
 
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
@@ -335,121 +284,46 @@ static inline List* urb_resize(List *list, Int new_size)
 
 // if you want to return something, pass a stack, values will be there
 // if you do not provide a stack, a new one will be created and freed at the end
-static inline void urb_interpret(List *context, List* code, List* _stack)
+static inline void urb_interpret(List *exec, List* code, List* _stack, List* _mem)
 {
     List *stack;
+    List *mem;
+    stack = (_stack == NULL) ? urb_new(URB_DEFAULT_SIZE) : _stack;
 
-    if (_stack == NULL)
+    if (_mem == NULL)
     {
-        stack = urb_new(URB_DEFAULT_SIZE);
+        mem = urb_new(URB_DEFAULT_SIZE);
+        urb_push(mem, (Value){.p = exec});
+        urb_push(mem, (Value){.p = code});
+        urb_push(mem, (Value){.p = stack});
+        urb_push(mem, (Value){.p = mem});
     }
     else
     {
-        stack = _stack;
+        mem = _mem;
     }
 
     // interpreting
     for (Int i = 0; i < code->size; i++)
     {
-        if(code->data[i].i >= INT_MAX - 15)
+        if(code->data[i].i < INT_MIN + exec->size)
         {
-            switch(code->data[i].i)
+            // jif operator
+            if (code->data[i].i == INT_MIN)
             {
-                case OP_CALL:
-                {
-                    List* list = (List*)urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    index = INDEX_CYCLE(index);
-                    list->data[index].fn(stack);
-                }
-                break;
-                case OP_JIF:
-                {
-                    Int cond = urb_pop(stack).i;
-                    Int posit = urb_pop(stack).i - 1;
-                    i = cond ? posit : i;
-                }
-                break;
-
-                // list ops
-                case OP_COPY:
-                    urb_push(stack, (Value){.p = urb_copy(urb_pop(stack).p)});
-                case OP_RESIZE:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int new_size = urb_pop(stack).i;
-                    urb_resize(list, new_size);
-                    urb_push(stack, (Value){.p = list});
-                }
-                break;
-                case OP_INSERT:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    Value value = urb_pop(stack);
-                    urb_insert(list, index, value);
-                    if (list == stack && index == -1)
-                        urb_insert(list, index, value);
-                }
-                break;
-                case OP_REMOVE:
-                {
-                    List* list = urb_pop(stack).p;
-                    Int index = urb_pop(stack).i;
-                    Value removed_value = urb_remove(list, index);
-                    if (list != stack && index == -1)
-                        urb_push(stack, removed_value);
-                }
-                break;
-                case OP_LEN:
-                    urb_push(stack, (Value){.i = ((List*)urb_pop(stack).p)->size});
-                break;
-
-                // math ops
-                case OP_LSHIFT:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a << b});
-                }
-                break;
-                case OP_RSHIFT:
-                {
-                    Int a = urb_pop(stack).i;
-                    Int b = urb_pop(stack).i;
-                    urb_push(stack, (Value){.i = a >> b});
-                }
-                break;
-                case OP_BAND:
-                    urb_push(stack, (Value){.i = urb_pop(stack).i & urb_pop(stack).i});
-                break;
-                case OP_BOR:
-                    urb_push(stack, (Value){.i = urb_pop(stack).i | urb_pop(stack).i});
-                break;
-                case OP_BXOR:
-                    urb_push(stack, (Value){.i = urb_pop(stack).i ^ urb_pop(stack).i});
-                break;
-
-                // aliases
-                case ALIAS_CONTEXT:
-                    urb_push(stack, (Value){.p = context});
-                break;
-                case ALIAS_STACK:
-                    urb_push(stack, (Value){.p = stack});
-                break;
-                case ALIAS_CODE:
-                    urb_push(stack, (Value){.p = code});
-                break;
-                case ALIAS_NULL:
-                    urb_push(stack, (Value){.i = ALIAS_NULL});
-                break;
-
-                default:
-                {
-                    printf("'%ld' is either a unmapped opcode or a out-of-bounds integer.\n", code->data[i].i);
-                }
-                break;
+                Int cond = urb_pop(stack).i;
+                Int posit = urb_pop(stack).i - 1;
+                i = cond ? posit : i;
             }
+            else
+            {
+                // - 1 because we compensate the INT_MIN bein the jif operator
+                exec->data[INT_MIN + code->data[i].i - 1].fn(stack);
+            }
+        }
+        else if(code->data[i].i > INT_MAX - mem->size)
+        {
+            urb_push(stack, code->data[INT_MAX - code->data[i].i]);
         }
         else 
         {

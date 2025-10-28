@@ -1,12 +1,13 @@
 #include "../etc/syntax.h"
+
 // we need this to prevent urb from interpreting our local scope
 goto(start)
 
 // there is no reason to pollute our global scope(context)
 // lets store our local variables here in the code
 local:
-    default_integer: 50
-    
+    a: 50
+
 start:
     call(print, 123)
     call(println)
@@ -14,3 +15,4 @@ start:
     call(println)
     call(print, start)
     call(println)
+goto(start)

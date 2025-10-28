@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
     
     fclose(file);
 
-    urb_interpret(context, code, NULL);
+    urb_interpret(context, code, NULL, NULL);
 
     urb_free(context);
     urb_free(code);

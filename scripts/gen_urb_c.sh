@@ -14,6 +14,7 @@ mapfile -t output < <(scripts/extract_funcs.sh "$@")
 tmp_c="${output[0]}"
 funcs=("${output[@]:1}")
 {
+    echo "#include \"urb.h\""
     echo "typedef struct List List;"
     echo "typedef union Value Value;"
     echo "typedef void (*Function)(List *stack);"
@@ -45,9 +46,18 @@ funcs=("${output[@]:1}")
     echo
 
     # array de índices
-    echo "static const int custom_func_indexes[] = {"
+    echo "static const Int custom_func_indexes[] = {"
     for i in "${!funcs[@]}"; do
         echo "    $i,"
+    done
+    echo "};"
+    echo
+
+    # array de opcodes baseados em INT_MIN + i
+    # a gente usa + 1 porque o INT_MIN é o operador de jump
+    echo "static const Int custom_func_opcodes[] = {"
+    for i in "${!funcs[@]}"; do
+        echo "    (INT_MIN + 1 + $i),"
     done
     echo "};"
     echo

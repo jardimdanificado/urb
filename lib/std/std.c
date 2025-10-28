@@ -5,7 +5,7 @@ void URB_interpret(List* stack)
 {
     List* context = urb_pop(stack).p;
     List* code = urb_pop(stack).p;
-    urb_interpret(context, code, stack);
+    urb_interpret(context, code, stack, NULL);
 }
 
 void URB_pack(List* stack)
