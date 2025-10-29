@@ -7,12 +7,12 @@ goto(start)
 // lets store our local variables here in the code
 local:
     a: 50
-
+    b: 123
 start:
-    call(print, 123)
+    call(print, $b)
     call(println)
     
-    call(print, call(get, _code, a))
+    call(print, $a)
     call(println)
     
     call(print, start)
@@ -21,5 +21,4 @@ start:
     call(print, start)
     call(println)
 
-// list our code
-    call(ls, _code)
+call(ls, _mem)

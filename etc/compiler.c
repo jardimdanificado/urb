@@ -148,6 +148,25 @@ static inline List* urb_preprocess(char* input_str)
             }
             break;
 
+            case '$':
+            {
+                for(UInt j = 0; j < label_names->size; j++)
+                {
+                    if(strcmp(token + 1, label_names->data[j].p) == 0)
+                    {
+                        // every position is actually 3 positions further
+                        // because code is stored in mem direcly
+                        // mem[0] is mem itself
+                        // mem[1] is exec mem
+                        // mem[2] is the stack
+                        // mem[3] is where the code really starts
+                        urb_push(code, (Value){.i = INT_MAX - (label_values->data[j].i + 3)});
+                        break;
+                    }
+                }
+            }
+            break;
+
             default:
             {
                 
@@ -183,7 +202,13 @@ static inline List* urb_preprocess(char* input_str)
                 {
                     if(strcmp(token, label_names->data[j].p) == 0)
                     {
-                        urb_push(code, (Value){.i = label_values->data[j].i});
+                        // every position is actually 3 positions further
+                        // because code is stored in mem direcly
+                        // mem[0] is mem itself
+                        // mem[1] is exec mem
+                        // mem[2] is the stack
+                        // mem[3] is actually where the code starts
+                        urb_push(code, (Value){.i = label_values->data[j].i + 3});
                         found = true;
                         break;
                     }

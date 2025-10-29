@@ -107,7 +107,7 @@ static inline List*              urb_resize(List *list, Int new_size);
 // copy
 static inline List*              urb_copy(const List *list);
 // ub representation
-static inline void               urb_interpret(List *exec, List* code, List* _stack, List* _mem);
+static inline void               urb_interpret(List *exec, List* code, List* _stack);
 
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
 
@@ -279,24 +279,18 @@ static inline List* urb_resize(List *list, Int new_size)
 
 // if you want to return something, pass a stack, values will be there
 // if you do not provide a stack, a new one will be created and freed at the end
-static inline void urb_interpret(List *exec, List* code, List* _stack, List* _mem)
+static inline void urb_interpret(List *exec, List* code, List* _stack)
 {
     List *stack;
-    List *mem;
     stack = (_stack == NULL) ? urb_new(URB_DEFAULT_SIZE) : _stack;
 
-    if (_mem == NULL)
-    {
-        mem = urb_new(URB_DEFAULT_SIZE);
-        urb_push(mem, (Value){.p = exec});
-        urb_push(mem, (Value){.p = code});
-        urb_push(mem, (Value){.p = stack});
-        urb_push(mem, (Value){.p = mem});
-    }
-    else
-    {
-        mem = _mem;
-    }
+    List* mem = urb_copy(code);
+    urb_unshift(mem, (Value){.p = stack});
+    urb_unshift(mem, (Value){.p = exec});
+    urb_unshift(mem, (Value){.p = mem});
+
+    // i might think about putting a pointer to the original code
+    //urb_unshift(mem, (Value){.p = code});
 
     // interpreting
     for (Int i = 0; i < code->size; i++)
@@ -331,10 +325,7 @@ static inline void urb_interpret(List *exec, List* code, List* _stack, List* _me
         urb_free(stack); // free stack only if it was created here
     }
     
-    if (_mem == NULL) 
-    {
-        urb_free(mem); // free mem only if it was created here
-    }
+    urb_free(mem); // free mem only if it was created here
 }
 
 #endif // ifndef URB_H macro
