@@ -233,8 +233,10 @@ int main(int argc, char* argv[])
     
     char* binary = malloc(sizeof(Int) * (compiled->size + 1));
 
+    Int normalized_size = compiled->size;
+
     // we copy the metadata(.size and .capacity)
-    memcpy(binary, compiled, sizeof(Int));
+    memcpy(binary, &normalized_size, sizeof(Int));
     
     // we copy the content(.data)
     memcpy(binary + sizeof(Int), compiled->data, compiled->size * sizeof(Int));
