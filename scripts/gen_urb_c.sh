@@ -9,6 +9,8 @@ fi
 mkdir -p build
 interpreter_c="build/urb.c"
 
+cp etc/syntax.h build/urb_dictionary.h
+
 # captura arquivo temporário e lista de funções
 mapfile -t output < <(scripts/extract_funcs.sh "$@")
 tmp_c="${output[0]}"
@@ -70,5 +72,14 @@ funcs=("${output[@]:1}")
     cat "$tmp_c"
     echo
 } > "$interpreter_c"
+
+{
+    for f in "${funcs[@]}"; do
+        real_name="${f##*:}"
+        clean_name=$(echo "$real_name" | sed -E 's/^[Uu][Rr][Bb]_//')
+        echo "#define $clean_name(...) REVERSE(__VA_ARGS__) $clean_name"
+    done
+    echo
+} >> "build/urb_dictionary.h"
 
 rm -f "$tmp_c"

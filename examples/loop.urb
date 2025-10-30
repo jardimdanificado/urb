@@ -1,4 +1,4 @@
-#include "../etc/syntax.h"
+#include "urb_dictionary.h"
 
 // we need this to prevent urb from interpreting our variables
 goto(start)
@@ -6,6 +6,6 @@ goto(start)
 local:
     i: 0
 start:
-    call(println, $i)
-    call(set, mem, i, call(inc, $i))
-    call(jif, call(le, $i, 100000), start)
+    println($i)
+    set(mem, i, inc($i))
+    jif(le($i, 100000), start)

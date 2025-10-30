@@ -1,5 +1,10 @@
 #include "urb.h"
 
+void URB_stack(List* stack)
+{
+    urb_push(stack, (Value){.p = stack});
+}
+
 // interpret
 void URB_interpret(List* stack)
 {

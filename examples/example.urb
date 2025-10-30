@@ -1,4 +1,4 @@
-#include "../etc/syntax.h"
+#include "urb_dictionary.h"
 
 // we need this to prevent urb from interpreting our local scope
 goto(start)
@@ -10,14 +10,10 @@ local:
     b: 123
     str: \abcde1\s234\n
 start:
-    call(println, $b)
+    println($b)
+    println($a)
+    println(start)
+    println(start)
+    pring(mem, str)
     
-    call(println, $a)
-    
-    call(println, start)
-
-    call(println, start)
-
-    call(pring, mem, str)
-    
-call(ls, mem)
+ls(mem)

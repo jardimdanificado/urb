@@ -5,22 +5,19 @@
 
 # user is meant to edit this manually for now
 LIBS="lib/example.c lib/std/*"
-SOURCE_FILE=examples/example.urb
+SOURCE_FILE=examples/loop.urb
 
 echo $LIBS
 
-# run scripts to generate urb.c and dictionary.h
-# urb.c is required to compile both urbc and urb
-# dictionary.h is used in textual urb
+# run scripts to generate urb.c
 ./scripts/gen_urb_c.sh $LIBS
-#./scripts/gen_dictionary.sh $LIBS
 
 # compile the bytecode compiler(urbc)
 # and the bytecode interpreter(urb)
 gcc -o urbc etc/compiler.c -g -I. -lm -O3
 gcc -o urb etc/interpreter.c -g -I. -lm -O3
 
-cpp -P $SOURCE_FILE > build/temp.urb
+cpp -P $SOURCE_FILE -I./build > build/temp.urb
 
 ./urbc build/temp.urb > build/temp.urbin
 
