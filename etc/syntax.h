@@ -1,7 +1,3 @@
-#define _mem   mem[0]
-#define _exec  mem[1]
-#define _stack mem[2]
-
 // we will limit args to 64
 #define REVERSE_1(a1) a1
 #define REVERSE_2(a1, a2) a2 a1

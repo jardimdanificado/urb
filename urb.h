@@ -49,6 +49,9 @@ typedef uintptr_t UInt;
     #define URB_DEFAULT_SIZE 0
 #endif
 
+// 3 because we have 3 special opcodes: jif, exec and mem
+#define OP_CODES_OFFSET 3
+
 typedef struct List List;
 typedef union Value Value;
 typedef void (*Function)(List *stack);
@@ -107,7 +110,7 @@ static inline List*              urb_resize(List *list, Int new_size);
 // copy
 static inline List*              urb_copy(const List *list);
 // ub representation
-static inline void               urb_interpret(List *exec, List* code, List* _stack);
+static inline void               urb_interpret(List *exec, List* mem, List* _stack);
 
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
 
@@ -279,44 +282,49 @@ static inline List* urb_resize(List *list, Int new_size)
 
 // if you want to return something, pass a stack, values will be there
 // if you do not provide a stack, a new one will be created and freed at the end
-static inline void urb_interpret(List *exec, List* code, List* _stack)
+static inline void urb_interpret(List *exec, List* mem, List* _stack)
 {
     List *stack;
     stack = (_stack == NULL) ? urb_new(URB_DEFAULT_SIZE) : _stack;
 
-    List* mem = urb_copy(code);
-    urb_unshift(mem, (Value){.p = stack});
-    urb_unshift(mem, (Value){.p = exec});
-    urb_unshift(mem, (Value){.p = mem});
-
-    // i might think about putting a pointer to the original code
-    //urb_unshift(mem, (Value){.p = code});
-
     // interpreting
-    for (Int i = 0; i < code->size; i++)
+    for (Int i = 0; i < mem->size; i++)
     {
-        if(code->data[i].i < INT_MIN + exec->size)
+        if(mem->data[i].i < INT_MIN + exec->size)
         {
-            // jif operator
-            if (code->data[i].i == INT_MIN)
+            switch(mem->data[i].i)
             {
-                Int cond = urb_pop(stack).i;
-                Int posit = urb_pop(stack).i - 1;
-                i = cond ? posit : i;
-            }
-            else
-            {
-                // - 1 because we compensate the INT_MIN bein the jif operator
-                exec->data[INT_MIN + code->data[i].i - 1].fn(stack);
+                case INT_MIN:
+                {
+                    Int cond = urb_pop(stack).i;
+                    Int posit = urb_pop(stack).i - 1;
+                    i = cond ? posit : i;
+                }
+                break;
+                case INT_MIN + 1:
+                {
+                    urb_push(stack, (Value){.p = exec});
+                }
+                break;
+                case INT_MIN + 2:
+                {
+                    urb_push(stack, (Value){.p = mem});
+                }
+                break;
+                default:
+                {
+                    exec->data[INT_MIN + mem->data[i].i - OP_CODES_OFFSET].fn(stack);
+                }
+                break;
             }
         }
-        else if(code->data[i].i > INT_MAX - mem->size)
+        else if(mem->data[i].i > INT_MAX - mem->size)
         {
-            urb_push(stack, mem->data[INT_MAX - code->data[i].i]);
+            urb_push(stack, mem->data[INT_MAX - mem->data[i].i]);
         }
         else 
         {
-            urb_push(stack, code->data[i]);
+            urb_push(stack, mem->data[i]);
         }
     }
 
@@ -324,8 +332,6 @@ static inline void urb_interpret(List *exec, List* code, List* _stack)
     {
         urb_free(stack); // free stack only if it was created here
     }
-    
-    urb_free(mem); // free mem only if it was created here
 }
 
 #endif // ifndef URB_H macro

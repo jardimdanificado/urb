@@ -6,9 +6,6 @@ goto(start)
 local:
     i: 0
 start:
-    call(print, $i)
-    call(println)
-    call(set, _mem, i, call(inc, $i))
-    call(print, call(get, _mem, i))
-    call(println)
+    call(println, $i)
+    call(set, mem, i, call(inc, $i))
     call(jif, call(le, $i, 100000), start)

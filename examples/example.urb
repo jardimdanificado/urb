@@ -21,4 +21,4 @@ start:
     call(print, start)
     call(println)
 
-call(ls, _mem)
+call(ls, mem)

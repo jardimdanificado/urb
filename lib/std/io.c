@@ -1,14 +1,9 @@
 #include "urb.h"
 
-void print(List* stack)
-{
-    Int value = urb_pop(stack).i;
-    printf("%ld", value);
-}
-
 void println(List* stack)
 {
-    printf("\n");
+    Int value = urb_pop(stack).i;
+    printf("%ld\n", value);
 }
 
 void ls(List* stack)

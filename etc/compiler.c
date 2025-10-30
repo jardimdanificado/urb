@@ -154,13 +154,7 @@ static inline List* urb_preprocess(char* input_str)
                 {
                     if(strcmp(token + 1, label_names->data[j].p) == 0)
                     {
-                        // every position is actually 3 positions further
-                        // because code is stored in mem direcly
-                        // mem[0] is mem itself
-                        // mem[1] is exec mem
-                        // mem[2] is the stack
-                        // mem[3] is where the code really starts
-                        urb_push(code, (Value){.i = INT_MAX - (label_values->data[j].i + 3)});
+                        urb_push(code, (Value){.i = INT_MAX - (label_values->data[j].i)});
                         break;
                     }
                 }
@@ -187,6 +181,16 @@ static inline List* urb_preprocess(char* input_str)
                     urb_push(code, (Value){.i = INT_MIN});
                     break;
                 }
+                else if (strcmp(token, "exec") == 0)
+                {
+                    urb_push(code, (Value){.i = INT_MIN + 1});
+                    break;
+                }
+                else if (strcmp(token, "mem") == 0)
+                {
+                    urb_push(code, (Value){.i = INT_MIN + 2});
+                    break;
+                }
                 else if(strstr(token, "mem[") != NULL)
                 {
                     urb_push(code, (Value){.i = INT_MAX - strtol(token + 4, NULL, 10)});
@@ -194,7 +198,7 @@ static inline List* urb_preprocess(char* input_str)
                 } 
                 else if(strstr(token, "exec[") != NULL)
                 {
-                    urb_push(code, (Value){.i = INT_MIN + strtol(token + 5, NULL, 10) + 1});
+                    urb_push(code, (Value){.i = INT_MIN + strtol(token + 5, NULL, 10) + OP_CODES_OFFSET});
                     break;
                 }
 
@@ -202,13 +206,7 @@ static inline List* urb_preprocess(char* input_str)
                 {
                     if(strcmp(token, label_names->data[j].p) == 0)
                     {
-                        // every position is actually 3 positions further
-                        // because code is stored in mem direcly
-                        // mem[0] is mem itself
-                        // mem[1] is exec mem
-                        // mem[2] is the stack
-                        // mem[3] is actually where the code starts
-                        urb_push(code, (Value){.i = label_values->data[j].i + 3});
+                        urb_push(code, (Value){.i = label_values->data[j].i});
                         found = true;
                         break;
                     }

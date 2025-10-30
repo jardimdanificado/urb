@@ -58,7 +58,7 @@ funcs=("${output[@]:1}")
     # array de opcodes baseados em INT_MIN + i
     echo "static const Int custom_func_opcodes[] = {"
     for i in "${!funcs[@]}"; do
-        echo "    (INT_MIN + 1 + $i),"
+        echo "    (INT_MIN + OP_CODES_OFFSET + $i),"
     done
     echo "};"
     echo
