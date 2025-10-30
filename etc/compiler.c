@@ -1,8 +1,9 @@
 #include "urb.h"
 // urb.c is a generated file
-// usually found at build/urb.c
-#include "urb.c"
+#include "../build/urb.c"
 #include "stdarg.h"
+
+// 
 
 // file stuff
 char* file_read(char *filename)
@@ -150,14 +151,81 @@ static inline List* urb_preprocess(char* input_str)
 
             case '$':
             {
-                for(UInt j = 0; j < label_names->size; j++)
+                if (token[1] >= '0' && token[1] <= '9')
                 {
-                    if(strcmp(token + 1, label_names->data[j].p) == 0)
+                    urb_push(code, (Value){.i = INT_MAX - strtol(token + 1, NULL, 10)});
+                }
+                else 
+                {
+                    for(UInt j = 0; j < label_names->size; j++)
                     {
-                        urb_push(code, (Value){.i = INT_MAX - (label_values->data[j].i)});
-                        break;
+                        if(strcmp(token + 1, label_names->data[j].p) == 0)
+                        {
+                            urb_push(code, (Value){.i = INT_MAX - (label_values->data[j].i)});
+                            break;
+                        }
                     }
                 }
+            }
+            break;
+
+            case '\\':
+            {
+                Int temp_result_size = 16;
+                char *result_str = malloc(temp_result_size);
+                if (!result_str) abort();
+
+                Int current_char = 0;
+                Int i = 1;
+
+                while (token[i] != 0)
+                {
+                    char c = token[i];
+                    if (c == '\\')
+                    {
+                        i++;
+                        switch (token[i])
+                        {
+                            case '\\': c = '\\'; break;
+                            case 's':  c = ' ';  break;
+                            case 'n':  c = '\n'; break;
+                            case 't':  c = '\t'; break;
+                            case 'r':  c = '\r'; break;
+                            case 0:    c = '\\'; i--; break;
+                            default:   c = token[i]; break; 
+                        }
+                    }
+
+                    result_str[current_char++] = c;
+
+                    if (current_char + 1 >= temp_result_size)
+                    {
+                        temp_result_size *= 2;
+                        result_str = realloc(result_str, temp_result_size);
+                        if (!result_str) abort();
+                    }
+
+                    i++;
+                }
+
+                result_str[current_char] = '\0';
+
+                Int result_size = current_char + 1;
+                Int values_needed = result_size;
+
+                while (values_needed % 8 != 0)
+                    values_needed++;
+
+                values_needed /= sizeof(Int);
+
+                Int starting_index = code->size;
+
+                for (Int j = 0; j < values_needed; j++)
+                    urb_push(code, (Value){.i = 0});
+
+                memcpy(&code->data[starting_index], result_str, result_size);
+
+                free(result_str);
             }
             break;
 
@@ -243,5 +311,6 @@ int main(int argc, char* argv[])
 
     fwrite(binary, 8, compiled->size + 1, stdout);
     free(file_content);
+    urb_free(compiled);
     return 0;
 };

@@ -8,17 +8,16 @@ goto(start)
 local:
     a: 50
     b: 123
+    str: \abcde1\s234\n
 start:
-    call(print, $b)
-    call(println)
+    call(println, $b)
     
-    call(print, $a)
-    call(println)
+    call(println, $a)
     
-    call(print, start)
-    call(println)
+    call(println, start)
 
-    call(print, start)
-    call(println)
+    call(println, start)
 
+    call(pring, mem, str)
+    
 call(ls, mem)

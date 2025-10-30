@@ -17,9 +17,8 @@ echo $LIBS
 
 # compile the bytecode compiler(urbc)
 # and the bytecode interpreter(urb)
-gcc -o urbc etc/compiler.c -g -I. -Ibuild -lm -O3
-gcc -o urb etc/interpreter.c -g -I. -Ibuild -lm -O3
-
+gcc -o urbc etc/compiler.c -g -I. -lm -O3
+gcc -o urb etc/interpreter.c -g -I. -lm -O3
 
 cpp -P $SOURCE_FILE > build/temp.urb
 
