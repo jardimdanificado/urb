@@ -1,6 +1,5 @@
 // urb
 // urb use no other libraries beside the standard C99 libraries
-// if urb does not work on a platform, its propably a bug, and should be reported.
 
 #ifndef URB_H
 #define URB_H 1
@@ -20,34 +19,29 @@
 typedef intptr_t Int;
 typedef uintptr_t UInt;
 
-// URB use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
-// URB use a union as universal type, and URB is able to manipulate and use pointers direcly so we need to use the pointer size;
-// note that int_min is -int_max instead -int_max-1
 #if INTPTR_MAX == INT64_MAX
     typedef double Float;
     typedef uint32_t UHalf;
     typedef int32_t Half;
     #define INT_MAX INT64_MAX
     #define INT_MIN INT64_MIN
-    #define UINT_MAX UINT64_MAX
-    #define UHALF_MAX UINT32_MAX
-    #define HALF_MAX INT32_MAX
-    #define HALF_MIN INT32_MIN
 #else
     typedef float Float;
     typedef uint16_t UHalf;
     typedef int16_t Half;
     #define INT_MAX INT32_MAX
     #define INT_MIN INT32_MIN
-    #define UINT_MAX UINT32_MAX
-    #define UHALF_MAX UINT16_MAX
-    #define HALF_MAX INT16_MAX
-    #define HALF_MIN INT16_MIN
 #endif
 
 #ifndef URB_DEFAULT_SIZE
     #define URB_DEFAULT_SIZE 0
 #endif
+
+#define PANIC(message) do {\
+        fprintf(stderr, "URB ERROR:" message "\n");\
+        fflush(stderr);\
+        abort();\
+    } while (0)
 
 // 3 because we have 3 special opcodes: jif, exec and mem
 #define OP_CODES_OFFSET 3
@@ -56,11 +50,8 @@ typedef struct List List;
 typedef union Value Value;
 typedef void (*Function)(List *stack);
 
-// we use unions here mainly for type punning
-// its against the C standards, but almost every C compiler supports it
-// the "correct" way of doing so would be using memcpy, but that also introduce some overhead
-// under conditions of strict C standard i would not use unions at all, 
-// instead i would store the values as uint64_t int64_t uint8_t[8] or such
+// we use unions here for type punning
+// by the c standards this is considered a undefined behavior
 union Value
 {
     // all types depend on the size of the pointer
@@ -68,9 +59,6 @@ union Value
     UInt u;
     Float f;
     void* p;
-    uint8_t b[sizeof(void*)];
-    // in C99 you cant cast a function pointer from a void*, 
-    // so we need the function pointer in the union as well
     Function fn;
 };
 
@@ -105,22 +93,17 @@ static inline Value              urb_pop(List *list);
 static inline Value              urb_shift(List *list);
 // remove and return the value at index i in the list, shifting the rest of the list
 static inline Value              urb_remove(List *list, Int i);
-// resize
-static inline List*              urb_resize(List *list, Int new_size);
-// copy
-static inline List*              urb_copy(const List *list);
-// ub representation
+// interpret function
 static inline void               urb_interpret(List *exec, List* mem, List* _stack);
 
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
 
 // functions implementations
-// functions implementations
-// functions implementations
-// functions implementations
 
 static inline List *urb_new(Int size)
 {
+    if (size < 0)
+        PANIC("cannot create a list with negative size.");
     List *list = (List*)malloc(sizeof(List));
     list->data = (size == 0) ? NULL : (Value*)malloc((size_t)size * sizeof(Value));
     list->size = 0;
@@ -177,30 +160,26 @@ static inline void urb_insert(List *list, Int index, Value value)
         urb_double(list);
 
     index = INDEX_CYCLE(index);
+
+    if(index > list->size || index < 0)
+        PANIC("cannot insert a value in a index out-of-bounds.");
     
-    switch(original_index)
-    {
-        case -1:
-            urb_push(list, value);
-        break;
-        case 0:
-            urb_unshift(list, value);
-        break;
-        default:
-            memmove(&(list->data[index + 1]), &(list->data[index]), (size_t)(list->size - index) * sizeof(Value));
-            list->data[index] = value;
-            list->size++;
-        break;
-    }
+    memmove(&(list->data[index + 1]), &(list->data[index]), (size_t)(list->size - index) * sizeof(Value));
+    list->data[index] = value;
+    list->size++;
 }
 
 static inline Value urb_pop(List *list)
 {
+    if (list->size <= 0)
+        PANIC("cannot pop a empty list.");
     return list->data[--list->size];
 }
 
 static inline Value urb_shift(List *list)
 {
+    if (list->size <= 0)
+        PANIC("cannot shift a empty list.");
     Value ret = list->data[0];
     memmove(&(list->data[0]), &(list->data[1]), (size_t)(list->size - 1) * sizeof(Value)); 
     list->size--; 
@@ -211,77 +190,19 @@ static inline Value urb_remove(List *list, Int i)
 {
     Int original_index = i;
     i = INDEX_CYCLE(i);
+
+    if (list->size <= 0)
+        PANIC("cannot remove from a empty list.");
+    else if(i > list->size || i < 0)
+        PANIC("cannot remove a out-of-bounds value.");
     
-    switch(original_index)
-    {
-        case -1:
-            return urb_pop(list);
-        break;
-        case 0:
-            return urb_shift(list);
-        break;
-        default:
-        {
-            Value ret = list->data[i];
-            Int elements_to_move = list->size - (i) - 1;
-            memmove(&(list->data[i]), &(list->data[i + 1]), elements_to_move * sizeof(Value)); 
-            list->size--; 
-            return ret;
-        }
-        break;
-    }
+    Value ret = list->data[i];
+    Int elements_to_move = list->size - i - 1;
+    memmove(&(list->data[i]), &(list->data[i + 1]), elements_to_move * sizeof(Value)); 
+    list->size--; 
+    return ret;
 }
 
-static inline List* urb_copy(const List *list)
-{
-    List *copy = urb_new(list->capacity);
-    
-    if (copy == NULL)
-    {
-        printf("URB_ERROR: failed to allocate memory for List copy\n");
-        exit(EXIT_FAILURE);
-    }
-    copy->size = list->size;
-    memcpy(copy->data, list->data, (size_t)copy->size * sizeof(Value));
-    
-    copy->capacity = list->capacity;
-
-    return copy;
-}
-
-static inline List* urb_resize(List *list, Int new_size)
-{
-    if(new_size < 0)
-    {
-        urb_free(list);
-        return NULL;
-    }
-    else if(new_size == 0)
-    {
-        free(list->data);
-        list->data = NULL;
-        list->capacity = 0;
-    }
-    else if(new_size < list->capacity/2)
-    {
-        while(new_size < list->capacity/2)
-        {
-            urb_half(list);
-        }
-    }
-    else if(new_size > list->capacity)
-    {
-        while(new_size > list->capacity)
-        {
-            urb_double(list);
-        }
-    }
-    list->size = new_size;
-    return list;
-}
-
-// if you want to return something, pass a stack, values will be there
-// if you do not provide a stack, a new one will be created and freed at the end
 static inline void urb_interpret(List *exec, List* mem, List* _stack)
 {
     List *stack;
@@ -302,36 +223,24 @@ static inline void urb_interpret(List *exec, List* mem, List* _stack)
                 }
                 break;
                 case INT_MIN + 1:
-                {
                     urb_push(stack, (Value){.p = exec});
-                }
                 break;
                 case INT_MIN + 2:
-                {
                     urb_push(stack, (Value){.p = mem});
-                }
                 break;
                 default:
-                {
                     exec->data[INT_MIN + mem->data[i].i - OP_CODES_OFFSET].fn(stack);
-                }
                 break;
             }
         }
         else if(mem->data[i].i > INT_MAX - mem->size)
-        {
             urb_push(stack, mem->data[INT_MAX - mem->data[i].i]);
-        }
-        else 
-        {
+        else
             urb_push(stack, mem->data[i]);
-        }
     }
 
     if (_stack == NULL) 
-    {
         urb_free(stack); // free stack only if it was created here
-    }
 }
 
 #endif // ifndef URB_H macro
