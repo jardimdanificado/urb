@@ -76,16 +76,6 @@ void URB_get(List* stack)
     urb_push(stack, list->data[index]);
 }
 
-void URB_drop(List* stack)
-{
-    urb_pop(stack);
-}
-
-void URB_dup(List* stack)
-{
-    urb_push(stack, stack->data[stack->size - 1]);
-}
-
 void URB_len(List* stack)
 {
     List* list = urb_pop(stack).p;
