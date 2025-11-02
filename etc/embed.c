@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     
     List* code = urb_new(code_capacity);
     code->size = code_size;
-    memcpy(code->data, embedded_code + sizeof(Int), embedded_code_len-sizeof(int));
+    memcpy(code->data, embedded_code + sizeof(Int), embedded_code_len-sizeof(Int));
     urb_interpret(exec, code, NULL);
 
     urb_free(exec);

@@ -47,7 +47,7 @@ void URB_rot(List* stack)
 
 void URB_drop(List* stack)
 {
-    printf("value dropped: %ld\n",urb_pop(stack).i);
+    urb_pop(stack);
 }
 
 void URB_pointer(List* stack)
