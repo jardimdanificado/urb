@@ -14,4 +14,5 @@ test_proc:
 start:
     set(mem, list, sublist(mem, local, sub(start, local)))
     callist($list)
+end:
     free($list)

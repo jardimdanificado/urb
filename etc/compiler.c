@@ -126,7 +126,7 @@ Int bytecount_to_wordcount(Int bytecount)
 {
     Int values_needed = bytecount;
 
-    while (values_needed % 8 != 0)
+    while (values_needed % sizeof(Int) != 0)
         values_needed++;
 
     values_needed /= sizeof(Int);
@@ -147,16 +147,6 @@ static inline List* urb_preprocess(char* input_str)
         if (token[0] == '\\')
         {
             label_correction += bytecount_to_wordcount(escaped_length(token));
-        }
-        else if(strstr(token, "args["))
-        {
-            // args[] generate 3 instructions instead one if corectly used
-            label_correction += 2;
-        }
-        else if(token[0] == '&')
-        {
-            // pointer alias generate 3 instructions instead one if corectly used
-            label_correction += 2;
         }
         else if(strchr(token, ':'))
         {
@@ -235,34 +225,9 @@ static inline List* urb_preprocess(char* input_str)
             }
             break;
 
-            // pointer to somewhere
-            case '&':
-            {
-                if (token[1] >= '0' && token[1] <= '9')
-                {
-                    urb_push(code, (Value){.i = strtol(token + 1, NULL, 10)});
-                    urb_push(code, (Value){.i = ALIAS_MEM}); // mem alias
-                    urb_push(code, (Value){.i = OP_pointer});
-                }
-                else 
-                {
-                    for(UInt j = 0; j < label_names->size; j++)
-                    {
-                        if(strcmp(token + 1, label_names->data[j].p) == 0)
-                        {
-                            urb_push(code, (Value){.i = label_values->data[j].i});
-                            urb_push(code, (Value){.i = ALIAS_MEM}); // mem alias
-                            urb_push(code, (Value){.i = OP_pointer});
-                            break;
-                        }
-                    }
-                }
-            }
-            break;
-
             case '\\':
             {
-                Int temp_result_size = escaped_length(token) + 8;
+                Int temp_result_size = escaped_length(token) + sizeof(Int);
                 char *result_str = malloc(temp_result_size);
                 if (!result_str) abort();
 
@@ -352,13 +317,6 @@ static inline List* urb_preprocess(char* input_str)
                     urb_push(code, (Value){.i = INT_MIN + OP_CODES_OFFSET});
                     break;
                 }
-                else if(strstr(token, "args[") != NULL)
-                {
-                    urb_push(code, (Value){.i = strtol(token + 5, NULL, 10)});
-                    urb_push(code, (Value){.i = ALIAS_ARGS});
-                    urb_push(code, (Value){.i = OP_get});
-                    break;
-                }
 
                 for(UInt j = 0; j < label_names->size; j++)
                 {
@@ -399,7 +357,7 @@ int main(int argc, char* argv[])
     // we copy the content(.data)
     memcpy(binary + sizeof(Int), compiled->data, compiled->size * sizeof(Int));
 
-    fwrite(binary, 8, compiled->size + 1, stdout);
+    fwrite(binary, sizeof(Int), compiled->size + 1, stdout);
     free(file_content);
     urb_free(compiled);
     return 0;
