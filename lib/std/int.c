@@ -43,36 +43,89 @@ void URB_mod(List* stack)
     urb_push(stack, (Value){.i = a % b});
 }
 
-void URB_neg(List* stack)
+// bitwise stuff
+
+void URB_band(List* stack)
 {
     Int a = urb_pop(stack).i;
-    urb_push(stack, (Value){.i = -a});
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a & b});
 }
 
-void URB_inc(List* stack)
+void URB_bor(List* stack)
 {
     Int a = urb_pop(stack).i;
-    urb_push(stack, (Value){.i = a + 1});
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a | b});
 }
 
-void URB_dec(List* stack)
+void URB_bxor(List* stack)
 {
     Int a = urb_pop(stack).i;
-    urb_push(stack, (Value){.i = a - 1});
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a ^ b});
 }
 
-void URB_abs(List* stack)
+void URB_bnot(List* stack)
 {
     Int a = urb_pop(stack).i;
-    urb_push(stack, (Value){.i = (a < 0) ? -a : a});
+    urb_push(stack, (Value){.i = ~a});
 }
 
-void URB_pow(List* stack)
+void URB_lshift(List* stack)
 {
-    Int exp = urb_pop(stack).i;
-    Int base = urb_pop(stack).i;
-    Int res = 1;
-    for (Int i = 0; i < exp; i++)
-        res *= base;
-    urb_push(stack, (Value){.i = res});
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a << b});
+}
+
+void URB_rshift(List* stack)
+{
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a >> b});
+}
+
+// condition stuff
+
+void URB_gt(List* stack)
+{
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a > b});
+}
+
+void URB_lt(List* stack)
+{
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a < b});
+}
+
+void URB_ge(List* stack)
+{
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a >= b});
+}
+
+void URB_le(List* stack)
+{
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a <= b});
+}
+
+void URB_eq(List* stack)
+{
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a == b});
+}
+
+void URB_ne(List* stack)
+{
+    Int a = urb_pop(stack).i;
+    Int b = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = a != b});
 }

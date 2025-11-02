@@ -1,0 +1,5 @@
+#include "urb_dictionary.h"
+goto(start)
+    str: \hello\sworld!\n
+start:
+    pring(pointer(mem, str))

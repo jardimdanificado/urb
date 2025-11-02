@@ -3,9 +3,9 @@
 // interpret
 void URB_interpret(List* stack)
 {
-    List* context = urb_pop(stack).p;
-    List* code = urb_pop(stack).p;
-    urb_interpret(context, code, stack);
+    List* exec = urb_pop(stack).p;
+    List* mem = urb_pop(stack).p;
+    urb_interpret(exec, mem, stack);
 }
 
 void URB_stack(List* stack)
@@ -47,5 +47,12 @@ void URB_rot(List* stack)
 
 void URB_drop(List* stack)
 {
-    urb_pop(stack);
+    printf("value dropped: %ld\n",urb_pop(stack).i);
+}
+
+void URB_pointer(List* stack)
+{
+    List* list = urb_pop(stack).p;
+    Int index = urb_pop(stack).i;
+    urb_push(stack, (Value){.p = list->data + index});
 }

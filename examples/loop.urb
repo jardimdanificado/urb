@@ -7,5 +7,5 @@ local:
     i: 0
 start:
     println($i)
-    set(mem, i, inc($i))
+    set(mem, i, add($i, 1))
     jif(le($i, 100000), start)

@@ -211,7 +211,7 @@ static inline void urb_interpret(List *exec, List* mem, List* _stack)
     // interpreting
     for (Int i = 0; i < mem->size; i++)
     {
-        if(mem->data[i].i < INT_MIN + exec->size)
+        if(mem->data[i].i < INT_MIN + exec->size + OP_CODES_OFFSET)
         {
             switch(mem->data[i].i)
             {

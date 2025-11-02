@@ -82,6 +82,57 @@ List* str_split(char *str, char *delim)
     return splited;
 }
 
+#include <stddef.h>
+
+// calcula o tamanho necessário (sem contar o terminador \0)
+size_t escaped_length(const char *token)
+{
+    size_t len = 0;
+    size_t i = 1; // começa em 1 porque o primeiro é '\\'
+
+    while (token[i] != 0)
+    {
+        char c = token[i];
+        if (c == '\\')
+        {
+            i++;
+            switch (token[i])
+            {
+                case '\\':
+                case 's':
+                case 'n':
+                case 't':
+                case 'r':
+                    // todas representam um único caractere
+                    break;
+                case 0:
+                    // string termina logo após '\'
+                    i--; // ajusta como o código original
+                    break;
+                default:
+                    // '\x' desconhecido, conta como 1
+                    break;
+            }
+        }
+
+        len++;
+        i++;
+    }
+
+    return len;
+}
+
+Int bytecount_to_wordcount(Int bytecount)
+{
+    Int values_needed = bytecount;
+
+    while (values_needed % 8 != 0)
+        values_needed++;
+
+    values_needed /= sizeof(Int);
+    return values_needed;
+}
+
 static inline List* urb_preprocess(char* input_str)
 {
     List* code = urb_new(URB_DEFAULT_SIZE);
@@ -89,14 +140,19 @@ static inline List* urb_preprocess(char* input_str)
     List* label_names = urb_new(URB_DEFAULT_SIZE);
     List* tokens = str_split(input_str, "\n\r \t");
 
+    Int label_correction = 0;
     for(UInt i = 0; i < tokens->size; i++)
     {
         char* token = tokens->data[i].p;
-        if(strchr(token, ':'))
+        if (token[0] == '\\')
+        {
+            label_correction += bytecount_to_wordcount(escaped_length(token));
+        }
+        else if(strchr(token, ':'))
         {
             token[strlen(token)-1] = 0;
             urb_push(label_names, (Value){.p = token});
-            urb_push(label_values, (Value){.u = i});
+            urb_push(label_values, (Value){.u = i + label_correction});
             urb_remove(tokens, i);
             i--;
         }
@@ -171,14 +227,14 @@ static inline List* urb_preprocess(char* input_str)
 
             case '\\':
             {
-                Int temp_result_size = 16;
+                Int temp_result_size = escaped_length(token) + 8;
                 char *result_str = malloc(temp_result_size);
                 if (!result_str) abort();
 
                 Int current_char = 0;
                 Int i = 1;
 
-                while (token[i] != 0)
+                while (current_char < temp_result_size)
                 {
                     char c = token[i];
                     if (c == '\\')
@@ -198,32 +254,19 @@ static inline List* urb_preprocess(char* input_str)
 
                     result_str[current_char++] = c;
 
-                    if (current_char + 1 >= temp_result_size)
-                    {
-                        temp_result_size *= 2;
-                        result_str = realloc(result_str, temp_result_size);
-                        if (!result_str) abort();
-                    }
-
                     i++;
                 }
 
                 result_str[current_char] = '\0';
 
-                Int result_size = current_char + 1;
-                Int values_needed = result_size;
-
-                while (values_needed % 8 != 0)
-                    values_needed++;
-
-                values_needed /= sizeof(Int);
+                Int values_needed = bytecount_to_wordcount(temp_result_size);
 
                 Int starting_index = code->size;
 
                 for (Int j = 0; j < values_needed; j++)
                     urb_push(code, (Value){.i = 0});
 
-                memcpy(&code->data[starting_index], result_str, result_size);
+                memcpy(&code->data[starting_index], result_str, temp_result_size);
 
                 free(result_str);
             }

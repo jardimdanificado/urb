@@ -14,18 +14,15 @@ void println(List* stack)
 
 void pring(List* stack)
 {
-    List* list = urb_pop(stack).p;
-    Int index = urb_pop(stack).i;
-    printf("%s", &list->data[index]);
+    unsigned char* str = urb_pop(stack).p;
+    printf("%s", str);
 }
 
 void pringln(List* stack)
 {
-    List* list = urb_pop(stack).p;
-    Int index = urb_pop(stack).i;
-    printf("%s\n", &list->data[index]);
+    unsigned char* str = urb_pop(stack).p;
+    printf("%s\n", str);
 }
-
 
 void ls(List* stack)
 {
@@ -35,4 +32,38 @@ void ls(List* stack)
     {
         printf("[%ld] = %ld\n", i, list->data[i].i);
     }
+}
+
+// file i/o
+List* load_urbin(const char* filename)
+{
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        fprintf(stderr, "error: cannot open file '%s'\n", filename);
+        return NULL;
+    }
+
+    Int code_size;
+    if (fread(&code_size, sizeof(Int), 1, file) != 1) {
+        fprintf(stderr, "error: file '%s' is empty or invalid\n", filename);
+        fclose(file);
+        return NULL;
+    }
+
+    // calcula capacidade como a menor potência de 2 >= code_size
+    Int cap = 1;
+    while (cap < code_size) cap *= 2;
+
+    List* code = urb_new(cap);
+    code->size = code_size;
+
+    if (fread(code->data, sizeof(Int), code->size, file) != code->size) {
+        fprintf(stderr, "error: file '%s' is corrupted or not a valid URB binary\n", filename);
+        urb_free(code);
+        fclose(file);
+        return NULL;
+    }
+
+    fclose(file);
+    return code;
 }

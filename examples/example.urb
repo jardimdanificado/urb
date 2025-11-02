@@ -8,12 +8,12 @@ goto(start)
 local:
     a: 50
     b: 123
-    str: \abcde1\s234\n
+    str: \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n
 start:
     println($b)
     println($a)
     println(start)
     println(start)
-    pring(mem, str)
+    pring(pointer(mem, str))
     
 ls(mem)
