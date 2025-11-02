@@ -1,0 +1,17 @@
+#include "urb_dictionary.h"
+
+goto(start)
+local:
+    file: 0
+    error_message: \you\sneed\sto\spass\sa\sfilename!\n
+start:
+    jif(lt(len(args), 2), error)
+    set(mem, file, load_urbin(args[1]))
+    interpret(exec, $file, stack)
+    goto(ok_end)
+error:
+    pring(&error_message)
+    goto(real_end)
+ok_end:
+    free($file)
+real_end:

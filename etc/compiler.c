@@ -148,6 +148,16 @@ static inline List* urb_preprocess(char* input_str)
         {
             label_correction += bytecount_to_wordcount(escaped_length(token));
         }
+        else if(strstr(token, "args["))
+        {
+            // args[] generate 3 instructions instead one if corectly used
+            label_correction += 2;
+        }
+        else if(token[0] == '&')
+        {
+            // pointer alias generate 3 instructions instead one if corectly used
+            label_correction += 2;
+        }
         else if(strchr(token, ':'))
         {
             token[strlen(token)-1] = 0;
@@ -225,6 +235,31 @@ static inline List* urb_preprocess(char* input_str)
             }
             break;
 
+            // pointer to somewhere
+            case '&':
+            {
+                if (token[1] >= '0' && token[1] <= '9')
+                {
+                    urb_push(code, (Value){.i = strtol(token + 1, NULL, 10)});
+                    urb_push(code, (Value){.i = ALIAS_MEM}); // mem alias
+                    urb_push(code, (Value){.i = OP_pointer});
+                }
+                else 
+                {
+                    for(UInt j = 0; j < label_names->size; j++)
+                    {
+                        if(strcmp(token + 1, label_names->data[j].p) == 0)
+                        {
+                            urb_push(code, (Value){.i = label_values->data[j].i});
+                            urb_push(code, (Value){.i = ALIAS_MEM}); // mem alias
+                            urb_push(code, (Value){.i = OP_pointer});
+                            break;
+                        }
+                    }
+                }
+            }
+            break;
+
             case '\\':
             {
                 Int temp_result_size = escaped_length(token) + 8;
@@ -294,12 +329,17 @@ static inline List* urb_preprocess(char* input_str)
                 }
                 else if (strcmp(token, "exec") == 0)
                 {
-                    urb_push(code, (Value){.i = INT_MIN + 1});
+                    urb_push(code, (Value){.i = ALIAS_EXEC});
                     break;
                 }
                 else if (strcmp(token, "mem") == 0)
                 {
-                    urb_push(code, (Value){.i = INT_MIN + 2});
+                    urb_push(code, (Value){.i = ALIAS_MEM});
+                    break;
+                }
+                else if (strcmp(token, "args") == 0)
+                {
+                    urb_push(code, (Value){.i = ALIAS_ARGS});
                     break;
                 }
                 else if(strstr(token, "mem[") != NULL)
@@ -309,7 +349,14 @@ static inline List* urb_preprocess(char* input_str)
                 } 
                 else if(strstr(token, "exec[") != NULL)
                 {
-                    urb_push(code, (Value){.i = INT_MIN + strtol(token + 5, NULL, 10) + OP_CODES_OFFSET});
+                    urb_push(code, (Value){.i = INT_MIN + OP_CODES_OFFSET});
+                    break;
+                }
+                else if(strstr(token, "args[") != NULL)
+                {
+                    urb_push(code, (Value){.i = strtol(token + 5, NULL, 10)});
+                    urb_push(code, (Value){.i = ALIAS_ARGS});
+                    urb_push(code, (Value){.i = OP_get});
                     break;
                 }
 

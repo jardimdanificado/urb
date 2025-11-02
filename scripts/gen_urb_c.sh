@@ -11,7 +11,6 @@ interpreter_c="build/urb.c"
 
 cp etc/syntax.h build/urb_dictionary.h
 
-# captura arquivo temporário e lista de funções
 mapfile -t output < <(scripts/extract_funcs.sh "$@")
 tmp_c="${output[0]}"
 funcs=("${output[@]:1}")
@@ -28,6 +27,16 @@ funcs=("${output[@]:1}")
         real_name="${f##*:}"
         echo "void $real_name(List* stack);"
     done
+    echo
+
+    # enum de funções customizadas
+    echo "typedef enum {"
+    for i in "${!funcs[@]}"; do
+        real_name="${funcs[$i]##*:}"
+        clean_name=$(echo "$real_name" | sed -E 's/^[Uu][Rr][Bb]_//')
+        echo "    OP_${clean_name} = (INT_MIN + OP_CODES_OFFSET + $i),"
+    done
+    echo "} CustomOpcodes;"
     echo
 
     # INIT_URB
@@ -57,7 +66,7 @@ funcs=("${output[@]:1}")
     echo "};"
     echo
 
-    # array de opcodes baseados em INT_MIN + i
+    # array de opcodes
     echo "static const Int custom_func_opcodes[] = {"
     for i in "${!funcs[@]}"; do
         echo "    (INT_MIN + OP_CODES_OFFSET + $i),"
@@ -65,7 +74,7 @@ funcs=("${output[@]:1}")
     echo "};"
     echo
 
-    # define com a quantidade de funções custom
+    # define com a quantidade de funções
     echo "#define CUSTOM_FUNC_COUNT ${#funcs[@]}"
     echo
 
@@ -73,6 +82,7 @@ funcs=("${output[@]:1}")
     echo
 } > "$interpreter_c"
 
+# gera dicionário de macros
 {
     for f in "${funcs[@]}"; do
         real_name="${f##*:}"

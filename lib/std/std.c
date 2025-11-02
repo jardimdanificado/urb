@@ -5,7 +5,8 @@ void URB_interpret(List* stack)
 {
     List* exec = urb_pop(stack).p;
     List* mem = urb_pop(stack).p;
-    urb_interpret(exec, mem, stack);
+    List* _stack = urb_pop(stack).p;
+    urb_interpret(exec, mem, _stack);
 }
 
 void URB_stack(List* stack)

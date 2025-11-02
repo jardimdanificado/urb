@@ -5,8 +5,9 @@ if (( $# < 1 )); then
 fi
 
 mkdir -p build
-./scripts/embed.sh "$1" "lib/*/*" > ./build/main
-chmod +x ./build/main
+
+./scripts/embed.sh "examples/interpreter.urb" "lib/*/*" > urb
+./scripts/compile.sh "$1" > build/test.urbin
 
 # check valgrind-out.txt for the debug output
 valgrind \
@@ -14,4 +15,4 @@ valgrind \
           --show-leak-kinds=all \
           --track-origins=yes \
           --log-file=./valgrind-out.txt \
-          --verbose ./build/main
+          --verbose ./urb build/test.urbin

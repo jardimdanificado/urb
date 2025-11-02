@@ -1,16 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 1 ]]; then
-    echo "Uso: $0 <arquivo_para_embutir>"
-    exit 1
-fi
-
 INPUT_FILE="$1"
-EMBED_SRC="./etc/embed.c"
-OUTPUT_FILE="./build/embedded.c"
+EMBED_SRC="./etc/boilerplate.c"
 
-mkdir -p ./build
 TMP_FILE=$(mktemp)
 
 while IFS= read -r line || [[ -n "$line" ]]; do
@@ -25,5 +18,4 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     fi
 done < "$EMBED_SRC"
 
-mv "$TMP_FILE" "$OUTPUT_FILE"
-echo "embedded source can be found at: $OUTPUT_FILE"
+cat "$TMP_FILE"

@@ -35,22 +35,23 @@ void ls(List* stack)
 }
 
 // file i/o
-List* load_urbin(const char* filename)
+void load_urbin(List* stack)
 {
+    // all variables are misnamed because they came from another context
+
+    char* filename = urb_pop(stack).p;
     FILE* file = fopen(filename, "rb");
-    if (!file) {
-        fprintf(stderr, "error: cannot open file '%s'\n", filename);
-        return NULL;
+    if (!file) 
+    {
+        PANIC("tried loading a file that doesnt exist.\n");
     }
 
     Int code_size;
-    if (fread(&code_size, sizeof(Int), 1, file) != 1) {
-        fprintf(stderr, "error: file '%s' is empty or invalid\n", filename);
-        fclose(file);
-        return NULL;
+    if (fread(&code_size, sizeof(Int), 1, file) != 1) 
+    {
+        PANIC("tried loading a file that is corrupted or not a valid URB binary.\n");
     }
 
-    // calcula capacidade como a menor potência de 2 >= code_size
     Int cap = 1;
     while (cap < code_size) cap *= 2;
 
@@ -58,12 +59,9 @@ List* load_urbin(const char* filename)
     code->size = code_size;
 
     if (fread(code->data, sizeof(Int), code->size, file) != code->size) {
-        fprintf(stderr, "error: file '%s' is corrupted or not a valid URB binary\n", filename);
-        urb_free(code);
-        fclose(file);
-        return NULL;
+        PANIC("tried loading a file that is corrupted or not a valid URB binary.\n");
     }
 
     fclose(file);
-    return code;
+    urb_push(stack, (Value){.p = code});
 }

@@ -1,5 +1,6 @@
 // urb
 // urb use no other libraries beside the standard C99 libraries
+// urb.h is standalone and is not dependant on any other file of the repo
 
 #ifndef URB_H
 #define URB_H 1
@@ -43,8 +44,18 @@ typedef uintptr_t UInt;
         abort();\
     } while (0)
 
+enum {
+    ALIAS_JIF = INT_MIN,
+    ALIAS_EXEC,
+    ALIAS_MEM,
+    // NOT ACTUALLY USED HERE
+    ALIAS_ARGS
+};
+
 // 3 because we have 3 special opcodes: jif, exec and mem
-#define OP_CODES_OFFSET 3
+// the the other 5 are unused, user may use it as placeholder for something
+// this hack is use by the compiler, where int_min + 3 is the args list
+#define OP_CODES_OFFSET 8
 
 typedef struct List List;
 typedef union Value Value;
@@ -222,10 +233,10 @@ static inline void urb_interpret(List *exec, List* mem, List* _stack)
                     i = cond ? posit : i;
                 }
                 break;
-                case INT_MIN + 1:
+                case ALIAS_EXEC:
                     urb_push(stack, (Value){.p = exec});
                 break;
-                case INT_MIN + 2:
+                case ALIAS_MEM:
                     urb_push(stack, (Value){.p = mem});
                 break;
                 default:

@@ -20,6 +20,21 @@ void URB_unpack(List* stack)
     }
 }
 
+void URB_sublist(List* stack)
+{
+    List* list = urb_pop(stack).p; 
+    Int offset = urb_pop(stack).i;
+    Int count = urb_pop(stack).i;
+    Int capacity = 1;
+    while(count > capacity) capacity *= 2;
+
+    List* new_list = urb_new(capacity);
+    new_list->size = count;
+    memcpy(new_list->data, list->data + offset, sizeof(Int) * count);
+    
+    urb_push(stack, (Value){.p = new_list});
+}
+
 void URB_push(List* stack)
 {
     List* list = urb_pop(stack).p;
@@ -100,8 +115,7 @@ void URB_swap(List* stack)
     Int index_b = urb_pop(stack).i;
     Int index_a = urb_pop(stack).i;
 
-    if (index_a < 0 || index_a >= list->size ||
-        index_b < 0 || index_b >= list->size)
+    if (index_a < 0 || index_a >= list->size || index_b < 0 || index_b >= list->size)
     {
         PANIC("cannot swap out-of-bounds elements.");
         return;
@@ -113,4 +127,14 @@ void URB_swap(List* stack)
 
     // mantém consistência: devolve a lista no topo da pilha
     urb_push(stack, (Value){.p = list});
+}
+
+void URB_free(List* stack)
+{
+    urb_free(urb_pop(stack).p);
+}
+
+void URB_bufree(List* stack)
+{
+    free(urb_pop(stack).p);
 }
