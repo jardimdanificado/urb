@@ -134,7 +134,9 @@ void URB_free(List* stack)
     urb_free(urb_pop(stack).p);
 }
 
-void URB_bufree(List* stack)
+void URB_pointer(List* stack)
 {
-    free(urb_pop(stack).p);
+    List* list = urb_pop(stack).p;
+    Int index = urb_pop(stack).i;
+    urb_push(stack, (Value){.p = list->data + index});
 }

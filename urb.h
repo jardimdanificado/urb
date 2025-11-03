@@ -15,7 +15,7 @@
 #include <ctype.h>
 
 // version
-#define URB_VERSION "0.9.4"
+#define URB_VERSION "0.9.4a"
 
 typedef intptr_t Int;
 typedef uintptr_t UInt;

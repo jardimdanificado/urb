@@ -1,16 +1,6 @@
 #include "urb_dictionary.h"
 goto(start)
     str: \hello\sworld!\n
-    exec_9: exec[9] 
 start:
-    // but note, exec[9] IS NOT a alias to "get(exec, 9)"
-    // exec[9] is the value (INT_MIN + 9 + 8)
-    // this value is recognized by the interpreter itself as exec[9]
-    // note exec[*] is a funcion and is auto exec if found on the code
-    // so we store where the interpreter doesnt read
-    println($exec_9)
-
-    // same applies to mem[2]
-    // but mem[] uses INT_MAX and a doesnt have offsets and is not auto-execd
-    // mem[2] is the value (INT_MAX - 2)
-    println(mem[2])
+    // pring is our string print function
+    pring(pointer(mem, str))

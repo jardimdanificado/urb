@@ -3,8 +3,6 @@
 #include "../build/urb.c"
 #include "stdarg.h"
 
-// 
-
 // file stuff
 char* file_read(char *filename)
 {

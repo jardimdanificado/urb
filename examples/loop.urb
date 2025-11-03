@@ -8,4 +8,9 @@ local:
 start:
     println($i)
     set(mem, i, add($i, 1))
+    // can look tricky but is actually very simple to understand
+    // it basically says:
+    // if $i is lesser or equals to 100000 goto start
+    // or
+    // if (i <= 100000) goto start;
     jif(le($i, 100000), start)

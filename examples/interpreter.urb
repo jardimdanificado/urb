@@ -1,5 +1,6 @@
 #include "urb_dictionary.h"
 
+// standalone interpreter alternative to embedding urb
 goto(start)
 local:
     file: 0
