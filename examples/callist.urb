@@ -1,4 +1,4 @@
-#include "urb_dictionary.h"
+include(urb_dictionary.h)
 
 #define callist(list) interpret(exec, list, stack)
 

@@ -1,3 +1,16 @@
+changequote({{,}})
+
+// m4 foreach
+divert({{-1}})
+
+define({{foreach}}, {{pushdef({{$1}})_foreach($@)popdef({{$1}})}})
+define({{_arg1}}, {{$1}})
+define({{_foreach}}, {{ifelse({{$2}}, {{()}}, {{}},
+  {{define({{$1}}, _arg1$2)$3{{}}$0({{$1}}, (shift$2), {{$3}})}})}})
+divert{{}}dnl
+
+
+
 // we will limit args to 64
 #define REVERSE_1(a1) a1
 #define REVERSE_2(a1, a2) a2 a1

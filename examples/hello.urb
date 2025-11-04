@@ -1,4 +1,4 @@
-#include "urb_dictionary.h"
+include(urb_dictionary.h)
 goto(start)
     str: \hello\sworld!\n
 start:

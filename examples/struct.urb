@@ -1,0 +1,28 @@
+include(urb_dictionary.h)
+
+define(NB, 0)
+define(MALE, 1)
+define(FEMALE, 2)
+
+define({{struct}}, 
+    {{
+        define({{tmp_name}}, $1)
+        tmp_name:
+        foreach({{_MEMBER}}, (shift($@)), {{tmp_name._MEMBER: 0
+        }})dnl
+    }}
+)
+define({{Person}}, {{struct($1, name, age, weight, height, gender)}})
+
+// code start
+goto(start)
+    joao_name: \joao
+    Person(joao)
+    
+start:
+    set(mem, joao.name, pointer(mem, joao_name))
+    set(mem, joao.age, 25)
+    set(mem, joao.weight, 78)
+    set(mem, joao.height, 179)
+    set(mem, joao.gender, NB)
+    println($joao.age)

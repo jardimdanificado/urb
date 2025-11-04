@@ -1,4 +1,4 @@
-#include "urb_dictionary.h"
+include(urb_dictionary.h)
 
 // we need this to prevent urb from interpreting our variables
 goto(start)
