@@ -1,27 +1,66 @@
 include(urb_dictionary.h)
 
-define(NB, 0)
-define(MALE, 1)
-define(FEMALE, 2)
+enum(NB, MALE, FEMALE)
+
 define({{Person}}, 
     {{
         struct($1, 
             name, 
             age, 
-            weight, height, gender)
+            weight, 
+            height, 
+            gender)
     }}
 )
 
-// code start
-goto(start)
+define({{string}}, {{pointer(mem, $1)}})
+define({{Person_print}}, 
+    {{
+        pring($$1.name)
+        pring(string(p_space))
+        pring(string(p_is))
+        pring(string(p_space))
+        pring(string(p_a))
+        pring(string(p_space))
+        println($$1.gender)
+
+        pring($$1.name)
+        pring(string(p_space))
+        pring(string(p_is))
+        pring(string(p_space))
+        print($$1.height)
+        pring(string(p_space))
+        pring(string(p_h))
+        pring(string(p_space))
+        pringln(string(p_tall))
+    }}
+)
+
+protect(
+    p_has: \has
+    p_is: \is
+    p_age: \years\sold
+    p_w: \kg
+    p_h: \centimeters
+    p_tall: \tall
+    p_a: \a
+    p_space: \\s
+
+// people stuff
     joao_name: \joao
 
     Person(joao)
+)
 
-start:
+scope(main,
     set(mem, joao.name, pointer(mem, joao_name))
-    set(mem, joao.age, 25)
+    set(mem, joao.age, 21)
     set(mem, joao.weight, 78)
     set(mem, joao.height, 179)
     set(mem, joao.gender, NB)
     println($joao.age)
+
+    Person_print(joao)
+)
+
+

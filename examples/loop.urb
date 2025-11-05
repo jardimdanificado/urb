@@ -1,16 +1,10 @@
 include(urb_dictionary.h)
 
-// we need this to prevent urb from interpreting our variables
-goto(start)
-
-local:
+protect(
     i: 0
-start:
+)
+
+while(gt($i, 100000), 
     println($i)
     set(mem, i, add($i, 1))
-    // can look tricky but is actually very simple to understand
-    // it basically says:
-    // if $i is lesser or equals to 100000 goto start
-    // or
-    // if (i <= 100000) goto start;
-    jumpif(le($i, 100000), start)
+)

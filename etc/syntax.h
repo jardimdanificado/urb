@@ -1,8 +1,5 @@
 changequote({{,}})
 
-// m4 foreach
-divert({{-1}})
-
 define({{foreach}}, {{pushdef({{$1}})_foreach($@)popdef({{$1}})}})
 define({{_arg1}}, {{$1}})
 define({{_foreach}}, {{ifelse({{$2}}, {{()}}, {{}},
@@ -17,6 +14,45 @@ define({{struct}},
         }})dnl
     }}
 )
+
+define({{enum}}, 
+  {{
+      define({{tmp_index}}, -1)
+      foreach({{_MEMBER}}, ($@), {{dnl
+        define({{tmp_index}}, incr(tmp_index))dnl
+        define(_MEMBER, tmp_index)dnl
+      }})dnl
+  }}
+)dnl
+
+define({{current_protected}}, 0)
+define({{protect}}, 
+  {{
+    goto({{protected_block_}}current_protected{{_end}})
+    {{protected_block_}}current_protected{{_start}}:
+    $1
+    {{protected_block_}}current_protected{{_end}}:
+    define({{current_protected}}, {{incr(current_protected)}})
+  }}
+)
+
+define({{scope}}, 
+  {{
+    $1{{_start}}:
+    $2
+    $1{{_end}}:
+  }}
+)
+
+define({{current_while_loop}}, 0)
+define({{while}}, {{
+    {{while_}}current_while_loop{{_start}}:
+    jumpif($1, {{while_}}current_while_loop{{_end}})
+    $2
+    jumpif(1, {{while_}}current_while_loop{{_start}})
+    {{while_}}current_while_loop{{_end}}:
+    define({{current_while_loop}}, {{incr(current_while_loop)}})
+}})
 
 // we will limit args to 64
 #define REVERSE_1(a1) a1
@@ -89,3 +125,4 @@ define({{struct}},
 
 define({{jumpif}}, $2 $1 {{jif}})
 define({{goto}}, {{$1}} 1 {{jif}})
+

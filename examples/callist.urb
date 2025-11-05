@@ -1,6 +1,6 @@
 include(urb_dictionary.h)
 
-#define callist(list) interpret(exec, list, stack)
+define(callist, {{interpret(exec, $1, stack)}})
 
 // we need this to prevent urb from interpreting our variables
 goto(start)

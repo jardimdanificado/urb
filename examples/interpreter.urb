@@ -6,7 +6,7 @@ local:
     file: 0
     error_message: \you\sneed\sto\spass\sa\sfilename!\n
 start:
-    jif(lt(len(args), 2), error)
+    jumpif(lt(len(args), 2), error)
     set(mem, file, load_urbin(get(args, 1)))
     interpret(exec, $file, stack)
     goto(free_before_end)
