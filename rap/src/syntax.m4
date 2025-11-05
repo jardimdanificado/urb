@@ -39,44 +39,71 @@ define({{local}},
   }}
 )dnl
 
-define({{current_while_loop}}, 0)
+define({{loop_id}}, 0)
+define({{if_id}}, 0)
+
 define({{until}}, {{
-    scope({{while_}}current_while_loop,
-      jumpif($1, {{while_}}current_while_loop{{_end}})
-      $2
-      jumpif(1, {{while_}}current_while_loop)
+    define({{id}}, {{loop_id}})
+    scope({{until_}}id,
+        jumpif($1, {{until_}}id{{_end}})
+        $2
+        jumpif(1, {{until_}}id)
+        {{until_}}id{{_end}}:
     )
-    define({{current_while_loop}}, {{incr(current_while_loop)}})
-}}
-)dnl
+    define({{loop_id}}, {{incr(loop_id)}})
+}})
 
 define({{while}}, {{
-  goto({{while_}}current_while_loop{{_condition_check}})
-    scope({{while_}}current_while_loop,
-      $2
-      {{while_}}current_while_loop{{_condition_check}}:
-      jumpif($1, {{while_}}current_while_loop)
+    define({{id}}, {{loop_id}})
+    {{while_}}id{{_check}}:
+    jumpif(not($1), {{while_}}id{{_end}})
+    scope({{while_}}id,
+        $2
+        jumpif(1, {{while_}}id{{_check}})
     )
-    define({{current_while_loop}}, {{incr(current_while_loop)}})
-}}
-)dnl
+    {{while_}}id{{_end}}:
+    define({{loop_id}}, {{incr(loop_id)}})
+}})
 
+dnl ====================================
+dnl dowhile(cond, body)
+dnl ====================================
 define({{dowhile}}, {{
-    scope({{while_}}current_while_loop,
-      $2
-      jumpif($1, {{while_}}current_while_loop)
+    define({{id}}, {{loop_id}})
+    scope({{dowhile_}}id,
+        $2
+        jumpif($1, {{dowhile_}}id)
     )
-    define({{current_while_loop}}, {{incr(current_while_loop)}})
-}}
-)dnl
+    define({{loop_id}}, {{incr(loop_id)}})
+}})
 
-define({{if}},
-  scope({{while_}}current_while_loop,
-    jumpif(not($1), {{while_}}current_while_loop{{_end}})
-    $2
-  )
-  define({{current_while_loop}}, {{incr(current_while_loop)}})
-)dnl
+dnl ====================================
+dnl if(cond, body)
+dnl ====================================
+define({{if}}, {{
+    define({{id}}, {{if_id}})
+    jumpif(not($1), {{if_}}id{{_end}})
+    scope({{if_}}id, $2)
+    {{if_}}id{{_end}}:
+    define({{if_id}}, {{incr(if_id)}})
+}})
+
+dnl ====================================
+dnl for(init, cond, incr, body)
+dnl ====================================
+define({{for}}, {{
+    define({{id}}, {{loop_id}})
+    $1                      dnl init
+    {{for_}}id{{_check}}:
+    jumpif(not($2), {{for_}}id{{_end}})  dnl cond
+    scope({{for_}}id,
+        $4
+        $3                  dnl incr
+        jumpif(1, {{for_}}id{{_check}})
+    )
+    {{for_}}id{{_end}}:
+    define({{loop_id}}, {{incr(loop_id)}})
+}})
 
 define({{reverse}}, {{ifelse({{$#}}, {{0}}, , {{$#}}, {{1}}, {{{{$1}}}},{{reverse(shift($@)), {{$1}}}})}})
 
