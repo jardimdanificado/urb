@@ -10,10 +10,11 @@ define({{Person}},
             weight, 
             height, 
             gender)
+
+        define($1{{_print}}, Person_print($1))
     }}
 )
 
-define({{string}}, {{pointer(mem, $1)}})
 define({{Person_print}}, 
     {{
         pring($$1.name)
@@ -36,7 +37,7 @@ define({{Person_print}},
     }}
 )
 
-protect(
+local(person_local, 
     p_has: \has
     p_is: \is
     p_age: \years\sold
@@ -58,7 +59,7 @@ scope(main,
     set(mem, joao.gender, NB)
     println($joao.age)
 
-    Person_print(joao)
+    joao_print()
 )
 
 
