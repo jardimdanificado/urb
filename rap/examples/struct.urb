@@ -59,6 +59,7 @@ scope(main,
     set(mem, joao.gender, NB)
     println($joao.age)
 
+    // class simutation
     joao_print()
 )
 

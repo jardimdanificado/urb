@@ -6,13 +6,13 @@ tmp_urb=$(mktemp /tmp/temp.urb.exe.XXXXXX)
 tmp_urbin=$(mktemp /tmp/temp.urbin.XXXXXX)
 
 # run scripts to generate urb.c
-./scripts/gen_urb_c.sh $LIBS
+./rap/scripts/gen_urb_c.sh $LIBS
 
 # compile the bytecode compiler(urbc)
-gcc -o urbc etc/compiler.c -g -I. -lm -O3
+gcc -o urbc rap/src/compiler.c -g -I. -lm -O3
 
-./scripts/compile.sh "$SOURCE_FILE" > "$tmp_urbin"
-./scripts/gen_embedded_c.sh "$tmp_urbin" > build/embedded.c
+./rap/scripts/compile.sh "$SOURCE_FILE" > "$tmp_urbin"
+./rap/scripts/gen_embedded_c.sh "$tmp_urbin" > build/embedded.c
 
 gcc -o $tmp_urb build/embedded.c -g -I. -lm -O3
 
