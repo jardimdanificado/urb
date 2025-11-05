@@ -1,6 +1,4 @@
 include(urb_dictionary.h)
-goto(start)
-    str: \hello\sworld!\n
-start:
-    // pring is our string print function
-    pring(pointer(mem, str))
+local(str, \hello\sworld!\n)
+local({{str2}}, \hello\sworld!\n)
+pring(pointer(mem, str))

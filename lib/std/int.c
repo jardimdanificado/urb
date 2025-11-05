@@ -129,3 +129,8 @@ void URB_ne(List* stack)
     Int b = urb_pop(stack).i;
     urb_push(stack, (Value){.i = a != b});
 }
+
+void URB_not(List* stack)
+{
+    urb_push(stack, (Value){.i = !urb_pop(stack).i});
+}

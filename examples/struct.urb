@@ -45,8 +45,6 @@ protect(
     p_tall: \tall
     p_a: \a
     p_space: \\s
-
-// people stuff
     joao_name: \joao
 
     Person(joao)

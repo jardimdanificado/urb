@@ -1,19 +1,13 @@
 include(urb_dictionary.h)
 
-// we need this to prevent urb from interpreting our local scope
-goto(start)
-
-// there is no reason to pollute our global scope(context)
-// lets store our local variables here in the code
-local:
+local(data,
     a: 50
     b: 123
-    str: \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n
-start:
+    str: \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n)
+    
+scope(main, 
     println($b)
     println($a)
-    println(start)
-    println(start)
+    println(main)
     pring(pointer(mem, str))
-    
-ls(mem)
+    ls(mem))

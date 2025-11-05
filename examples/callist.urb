@@ -5,14 +5,14 @@ define(callist, {{interpret(exec, $1, stack)}})
 // we need this to prevent urb from interpreting our variables
 goto(start)
 
-local:
+data:
     i: 0
     str: \hello\sworld!\n
     list: 0
 test_proc:
-    pring(pointer(mem, sub(str, local)))
+    pring(pointer(mem, sub(str, data)))
 start:
-    set(mem, list, sublist(mem, local, sub(start, local)))
+    set(mem, list, sublist(mem, data, sub(start, data)))
     callist($list)
 end:
     free($list)

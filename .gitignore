@@ -7,6 +7,3 @@ bruter.h
 *.exe
 *.urbin
 build
-
-# bruter stdlib is bein ported to urb, but not fully yet
-# lib/std

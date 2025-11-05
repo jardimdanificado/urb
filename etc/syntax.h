@@ -13,7 +13,7 @@ define({{struct}},
         foreach({{_MEMBER}}, (shift($@)), {{tmp_name._MEMBER: 0
         }})dnl
     }}
-)
+)dnl
 
 define({{enum}}, 
   {{
@@ -25,34 +25,69 @@ define({{enum}},
   }}
 )dnl
 
+define({{scope}}, 
+  {{
+    $1:
+    $2
+    $1{{_end}}:
+  }}
+)dnl
+
 define({{current_protected}}, 0)
 define({{protect}}, 
   {{
     goto({{protected_block_}}current_protected{{_end}})
-    {{protected_block_}}current_protected{{_start}}:
-    $1
-    {{protected_block_}}current_protected{{_end}}:
+    scope({{protected_block_}}current_protected, $1)
     define({{current_protected}}, {{incr(current_protected)}})
   }}
-)
+)dnl
 
-define({{scope}}, 
+
+define({{local}}, 
   {{
-    $1{{_start}}:
-    $2
-    $1{{_end}}:
+    goto($1{{_end}})
+    scope($1, $2)
   }}
-)
+)dnl
 
 define({{current_while_loop}}, 0)
-define({{while}}, {{
-    {{while_}}current_while_loop{{_start}}:
-    jumpif($1, {{while_}}current_while_loop{{_end}})
-    $2
-    jumpif(1, {{while_}}current_while_loop{{_start}})
-    {{while_}}current_while_loop{{_end}}:
+define({{until}}, {{
+    scope({{while_}}current_while_loop,
+      jumpif($1, {{while_}}current_while_loop{{_end}})
+      $2
+      jumpif(1, {{while_}}current_while_loop)
+    )
     define({{current_while_loop}}, {{incr(current_while_loop)}})
-}})
+}}
+)dnl
+
+define({{while}}, {{
+  goto({{while_}}current_while_loop{{_condition_check}})
+    scope({{while_}}current_while_loop,
+      $2
+      {{while_}}current_while_loop{{_condition_check}}:
+      jumpif($1, {{while_}}current_while_loop)
+    )
+    define({{current_while_loop}}, {{incr(current_while_loop)}})
+}}
+)dnl
+
+define({{dowhile}}, {{
+    scope({{while_}}current_while_loop,
+      $2
+      jumpif($1, {{while_}}current_while_loop)
+    )
+    define({{current_while_loop}}, {{incr(current_while_loop)}})
+}}
+)dnl
+
+define({{if}},
+  scope({{while_}}current_while_loop,
+    jumpif(not($1), {{while_}}current_while_loop{{_end}})
+    $2
+  )
+  define({{current_while_loop}}, {{incr(current_while_loop)}})
+)
 
 // we will limit args to 64
 #define REVERSE_1(a1) a1

@@ -1,0 +1,5 @@
+include(urb_dictionary.h)
+
+local(str, \hello\sworld!\n)
+
+if(ge(900, 1), pring(pointer(mem, str)))

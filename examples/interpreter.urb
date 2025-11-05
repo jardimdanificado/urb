@@ -1,18 +1,17 @@
 include(urb_dictionary.h)
 
 // standalone interpreter alternative to embedding urb
-goto(start)
-local:
-    file: 0
-    error_message: \you\sneed\sto\spass\sa\sfilename!\n
-start:
+local(file, 0)
+local(error_message, \you\sneed\sto\spass\sa\sfilename!\n)
+
+scope(main, 
     jumpif(lt(len(args), 2), error)
     set(mem, file, load_urbin(get(args, 1)))
     interpret(exec, $file, stack)
-    goto(free_before_end)
-error:
+    goto(exit))
+
+scope(error, 
     pring(pointer(mem, error_message))
-    goto(end)
-free_before_end:
-    free($file)
-end:
+    goto(exit_end))
+
+scope(exit, free($file))

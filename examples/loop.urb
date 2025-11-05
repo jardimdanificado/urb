@@ -1,10 +1,9 @@
 include(urb_dictionary.h)
 
-protect(
-    i: 0
-)
+local(i, 0)
 
-while(gt($i, 100000), 
+while(le($i, 100000), 
+{{
     println($i)
     set(mem, i, add($i, 1))
-)
+}})
