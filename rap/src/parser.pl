@@ -31,11 +31,11 @@ sub process {
     my $len = length $s;
 
     while (pos($s) < $len) {
-        if ($s =~ /\G(.*?)\b(scope|if|while|until|local)\b/sgc) {
+        if ($s =~ /\G(.*?)\b(scope|struct|if|while|until|local|enum)\b/sgc) {
             $out .= $1;           # texto até a keyword
             my $kw = $2;
 
-            if ($kw eq 'scope' or $kw eq 'local') {
+            if ($kw eq 'scope' or $kw eq 'local' or $kw eq 'struct') {
                 my $kind = $kw;
                 $s =~ /\G\s*/gc;
                 if ($s =~ /\G([A-Za-z0-9_]+)\s*/gc) {
@@ -102,6 +102,16 @@ sub process {
                     }
                 } else {
                     $out .= $kind;
+                }
+            } elsif ($kw eq 'enum') {
+                $s =~ /\G\s*/gc;
+                if ($s =~ /\G\{/gc) {
+                    my ($inner, $pos_after) = extract_block($s, pos($s)-1, '{', '}');
+                    pos($s) = $pos_after;
+                    my $proc = process($inner);
+                    $out .= "enum({{\n$proc\n}})";
+                } else {
+                    $out .= 'enum';
                 }
             } else {
                 $out .= $kw;

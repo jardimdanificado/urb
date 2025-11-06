@@ -1,6 +1,10 @@
 include(urb_dictionary.h)
 
-enum(NB, MALE, FEMALE)
+enum {
+    NB, 
+    MALE, 
+    FEMALE
+}
 
 define({{Person}}, 
     {{
@@ -37,8 +41,7 @@ define({{Person_print}},
     }}
 )
 
-local person_local
-{
+local person_local {
     p_has: \has
     p_is: \is
     p_age: \years\sold

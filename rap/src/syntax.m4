@@ -65,21 +65,6 @@ define({{while}}, {{
     define({{loop_id}}, {{incr(loop_id)}})
 }})
 
-dnl ====================================
-dnl dowhile(cond, body)
-dnl ====================================
-define({{dowhile}}, {{
-    define({{id}}, {{loop_id}})
-    scope({{dowhile_}}id,
-        $2
-        jumpif($1, {{dowhile_}}id)
-    )
-    define({{loop_id}}, {{incr(loop_id)}})
-}})
-
-dnl ====================================
-dnl if(cond, true, else)
-dnl ====================================
 define({{if}}, {{
     define({{id}}, {{if_id}})
 
@@ -91,25 +76,6 @@ define({{if}}, {{
     {{if_}}id{{_after}}:
     define({{if_id}}, {{incr(if_id)}})
 }})
-
-dnl ====================================
-dnl for(init, cond, incr, body)
-dnl ====================================
-define({{for}}, {{
-    define({{id}}, {{loop_id}})
-    $1                      dnl init
-    {{for_}}id{{_check}}:
-    jumpif(not($2), {{for_}}id{{_end}})  dnl cond
-    scope({{for_}}id,
-        $4
-        $3                  dnl incr
-        jumpif(1, {{for_}}id{{_check}})
-    )
-    {{for_}}id{{_end}}:
-    define({{loop_id}}, {{incr(loop_id)}})
-}})
-
-define({{reverse}}, {{ifelse({{$#}}, {{0}}, , {{$#}}, {{1}}, {{{{$1}}}},{{reverse(shift($@)), {{$1}}}})}})
 
 define({{jumpif}}, $2 $1 {{jif}})
 define({{goto}}, {{$1}} 1 {{jif}})

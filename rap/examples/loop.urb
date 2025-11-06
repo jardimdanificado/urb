@@ -1,5 +1,7 @@
 include(urb_dictionary.h)
-
-for(local(i, 0), le($i, 100000), set(mem, i, add($i, 1)),
+local i {0}
+while(le($i, 100000))
+{
     println($i)
-)
+    set(mem, i, add($i, 1))
+}
