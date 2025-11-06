@@ -56,11 +56,18 @@ local person_local {
 }
 
 scope main {
+    joao.name = pointer(mem, joao_name)
+    joao.age = 21
+    joao.weight = 78
+    joao.height = 179
+    joao.gender = NB
     set(mem, joao.name, pointer(mem, joao_name))
     set(mem, joao.age, 21)
     set(mem, joao.weight, 78)
     set(mem, joao.height, 179)
     set(mem, joao.gender, NB)
+
+    
     println($joao.age)
 
     // class simutation

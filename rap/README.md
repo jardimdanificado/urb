@@ -13,4 +13,4 @@ in case you using the urb language you will need:
 - a linux enviroment(optional, but preferred)
 - a *gcc compatible* C compiler
 - GNU m4, i guess other m4 implementation might work as well
-- perl
+- perl 5.14 or newer
