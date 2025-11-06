@@ -1,6 +1,15 @@
-include(urb_dictionary.h)
-local str 
-{
+// local scopes are skipped by default
+local str {
     \hello\sworld!\n
 }
-pring(pointer(mem, str))
+
+// main is not a local scope
+// so it is interpreted by default
+// main is not require as it is in C, this is just for organization porpuses
+// main{} is a shortcut to scope main{}
+main {
+    pring(pointer(mem, str))
+}
+
+// the code could be here as well, nothing changes
+// pring(pointer(mem, str))

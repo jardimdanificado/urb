@@ -17,6 +17,64 @@ local $/;
 my $src = <>;
 $src = '' unless defined $src;
 
+sub add_scope_outside_literals {
+    my ($src) = @_;
+    my $out = '';
+    my $i = 0;
+    my $len = length $src;
+    my $in_s = 0;
+    my $quote = '';
+
+    while ($i < $len) {
+        my $ch = substr($src, $i, 1);
+
+        # strings: ignora até fechar
+        if (!$in_s && ($ch eq '"' || $ch eq "'")) {
+            $in_s = 1; $quote = $ch; $out .= $ch; $i++; next;
+        } elsif ($in_s) {
+            if ($ch eq '\\') { $out .= substr($src, $i, 2); $i += 2; next; }
+            if ($ch eq $quote) { $in_s = 0; $quote = ''; $out .= $ch; $i++; next; }
+            $out .= $ch; $i++; next;
+        }
+
+        # ignora enum { ... }
+        if (substr($src, $i) =~ /\A(enum)\s*\{/) {
+            $out .= $&;
+            $i += length($&);
+            next;
+        }
+
+        # ignora local nome { ... }
+        if (substr($src, $i) =~ /\Alocal\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
+            $out .= $&;
+            $i += length($&);
+            next;
+        }
+
+        # ignora scope nome { ... } já existente
+        if (substr($src, $i) =~ /\Ascope\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
+            $out .= $&;
+            $i += length($&);
+            next;
+        }
+
+        # caso geral: NAME { → scope NAME {
+        if (substr($src, $i) =~ /\A([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
+            my $name = $1;
+            $out .= "scope $name {";
+            $i += length($&);
+            next;
+        }
+
+        $out .= $ch;
+        $i++;
+    }
+
+    return $out;
+}
+
+$src = add_scope_outside_literals($src);
+
 # garantir que pos começa em zero
 pos($src) = 0;
 

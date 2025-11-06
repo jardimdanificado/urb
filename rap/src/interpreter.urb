@@ -1,23 +1,21 @@
-include(urb_dictionary.h)
-
 // standalone interpreter alternative to embedding urb
 local data {
     file: 0
     error_message: \you\sneed\sto\spass\sa\sfilename!\n
 }
 
-scope main {
+main {
     jumpif(lt(len(args), 2), error)
     set(mem, file, load_urbin(get(args, 1)))
     interpret(exec, $file, stack)
     goto(exit)
 }
 
-scope error {
+error {
     pring(pointer(mem, error_message))
     goto(exit_end)
 }
 
-scope exit {
+exit {
     free($file)
 }

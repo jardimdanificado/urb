@@ -1,12 +1,10 @@
-include(urb_dictionary.h)
-
 local data {
     a: 50
     b: 123
     str: \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n
 }
     
-scope main { 
+main { 
     println($b)
     println($a)
     println(main)

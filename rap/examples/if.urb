@@ -1,5 +1,3 @@
-include(urb_dictionary.h)
-
 local str {\hello\sworld!\n}
 
 if (ge(1, 900))

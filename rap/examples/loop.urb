@@ -1,5 +1,5 @@
-include(urb_dictionary.h)
 local i {0}
+
 while(le($i, 100000))
 {
     println($i)
