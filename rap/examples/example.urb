@@ -1,8 +1,8 @@
-local data {
+data [
     a: 50
     b: 123
     str: \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n
-}
+]
     
 main { 
     println($b)

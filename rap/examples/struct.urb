@@ -39,7 +39,7 @@ define({{Person_print}},
     }}
 )
 
-local person_local {
+person_local [
     p_has: \has
     p_is: \is
     p_age: \years\sold
@@ -51,14 +51,9 @@ local person_local {
     joao_name: \joao
 
     Person(joao)
-}
+]
 
 scope main {
-    joao.name = pointer(mem, joao_name)
-    joao.age = 21
-    joao.weight = 78
-    joao.height = 179
-    joao.gender = NB
     set(mem, joao.name, pointer(mem, joao_name))
     set(mem, joao.age, 21)
     set(mem, joao.weight, 78)

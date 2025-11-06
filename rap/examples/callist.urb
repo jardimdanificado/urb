@@ -1,12 +1,14 @@
 define(callist, {{interpret(exec, $1, stack)}})
 
-local data {
+
+data [
     i: 0
     str: \hello\sworld!\n
     list: 0
-
-    pring(pointer(mem, sub(str, data)))
-}
+    test_proc {
+        pring(pointer(mem, sub(str, data)))
+    }
+]
 
 main {
     set(mem, list, sublist(mem, data, sub(main, data)))

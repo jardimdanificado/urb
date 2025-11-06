@@ -1,7 +1,5 @@
 // local scopes are skipped by default
-local str {
-    \hello\sworld!\n
-}
+str [\hello\sworld!\n]
 
 // main is not a local scope
 // so it is interpreted by default

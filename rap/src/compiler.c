@@ -305,12 +305,12 @@ static inline List* urb_preprocess(char* input_str)
                     urb_push(code, (Value){.i = ALIAS_ARGS});
                     break;
                 }
-                else if(strstr(token, "mem[") != NULL)
+                else if(strstr(token, "mem<") != NULL)
                 {
                     urb_push(code, (Value){.i = INT_MAX - strtol(token + 4, NULL, 10)});
                     break;
                 } 
-                else if(strstr(token, "exec[") != NULL)
+                else if(strstr(token, "exec<") != NULL)
                 {
                     urb_push(code, (Value){.i = INT_MIN + OP_CODES_OFFSET});
                     break;

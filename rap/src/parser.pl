@@ -17,7 +17,7 @@ local $/;
 my $src = <>;
 $src = '' unless defined $src;
 
-sub add_scope_outside_literals {
+sub add_scope_and_local {
     my ($src) = @_;
     my $out = '';
     my $i = 0;
@@ -28,7 +28,7 @@ sub add_scope_outside_literals {
     while ($i < $len) {
         my $ch = substr($src, $i, 1);
 
-        # strings: ignora até fechar
+        # strings
         if (!$in_s && ($ch eq '"' || $ch eq "'")) {
             $in_s = 1; $quote = $ch; $out .= $ch; $i++; next;
         } elsif ($in_s) {
@@ -39,30 +39,39 @@ sub add_scope_outside_literals {
 
         # ignora enum { ... }
         if (substr($src, $i) =~ /\A(enum)\s*\{/) {
-            $out .= $&;
-            $i += length($&);
-            next;
+            $out .= $&; $i += length($&); next;
         }
 
         # ignora local nome { ... }
         if (substr($src, $i) =~ /\Alocal\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
-            $out .= $&;
-            $i += length($&);
-            next;
+            $out .= $&; $i += length($&); next;
         }
 
-        # ignora scope nome { ... } já existente
+        # ignora scope nome { ... }
         if (substr($src, $i) =~ /\Ascope\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
-            $out .= $&;
-            $i += length($&);
-            next;
+            $out .= $&; $i += length($&); next;
         }
 
-        # caso geral: NAME { → scope NAME {
+        # caso de "Nome {" → scope Nome {
         if (substr($src, $i) =~ /\A([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
             my $name = $1;
             $out .= "scope $name {";
             $i += length($&);
+            next;
+        }
+
+        # caso de "Nome [" → local Nome {
+        if (substr($src, $i) =~ /\A([A-Za-z_][A-Za-z0-9_]*)\s*\[/) {
+            my $name = $1;
+            $out .= "local $name {";
+            $i += length($&);
+            next;
+        }
+
+        # substitui ']' por '}'
+        if ($ch eq ']') {
+            $out .= '}';
+            $i++;
             next;
         }
 
@@ -73,7 +82,7 @@ sub add_scope_outside_literals {
     return $out;
 }
 
-$src = add_scope_outside_literals($src);
+$src = add_scope_and_local($src);
 
 # garantir que pos começa em zero
 pos($src) = 0;
@@ -167,7 +176,7 @@ sub process {
                     my ($inner, $pos_after) = extract_block($s, pos($s)-1, '{', '}');
                     pos($s) = $pos_after;
                     my $proc = process($inner);
-                    $out .= "enum({{\n$proc\n}})";
+                    $out .= "enum(\n$proc\n)";
                 } else {
                     $out .= 'enum';
                 }
