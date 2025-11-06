@@ -17,7 +17,7 @@ in case you using the urb language you will need:
 - perl 5.14 or newer
 - bash, sed, xxd etc...
 
-any decent linux system will already have that bundled in;
+any decent linux system will already have all that bundled in;
 
 ## compiling
 

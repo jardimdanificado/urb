@@ -52,9 +52,10 @@ enum {
     ALIAS_ARGS
 };
 
-// 3 because we have 3 special opcodes: jif, exec and mem
+// we have 8 reserved values
+// we have 3 special opcodes: jif, exec and mem
 // the the other 5 are unused, user may use it as placeholder for something
-// this hack is use by the compiler, where int_min + 3 is the args list
+// this hack is used by the rap compiler, where int_min + 3 is the args list
 #define OP_CODES_OFFSET 8
 
 typedef struct List List;
@@ -107,9 +108,8 @@ static inline Value              urb_remove(List *list, Int i);
 // interpret function
 static inline void               urb_interpret(List *exec, List* mem, List* _stack);
 
+// index cycle deal with negative indexes, -1 is the last value, and so on
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
-
-// functions implementations
 
 static inline List *urb_new(Int size)
 {
