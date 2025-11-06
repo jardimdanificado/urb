@@ -1,4 +1,4 @@
 include(urb_dictionary.h)
-local(str, \hello\sworld!\n)
-local({{str2}}, \hello\sworld!\n)
+local str {\hello\sworld!\n}
+local str2 {\hello\sworld!\n}
 pring(pointer(mem, str))

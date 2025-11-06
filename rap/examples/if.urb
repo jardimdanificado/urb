@@ -1,5 +1,12 @@
 include(urb_dictionary.h)
 
-local(str, \hello\sworld!\n)
+local str {\hello\sworld!\n}
 
-if(ge(900, 1), pring(pointer(mem, str)))
+if (ge(1, 900))
+{
+    pring(pointer(mem, str))
+}
+else
+{
+    println(9999)
+}

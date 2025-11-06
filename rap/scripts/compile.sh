@@ -3,10 +3,13 @@
 # cria arquivos temporários seguros
 tmp_urb=$(mktemp /tmp/temp.urb.XXXXXX)
 tmp_urb4=$(mktemp /tmp/temp.urb.XXXXXX)
+tmp_urb_pl=$(mktemp /tmp/temp.urb.XXXXXX)
 tmp_urbin=$(mktemp /tmp/temp.urbin.XXXXXX)
 
+./rap/src/parser.pl "$1" > "$tmp_urb_pl"
+
 # procesa com m4
-m4 "$1" -I./build > "$tmp_urb4"
+m4 "$tmp_urb_pl" -I./build > "$tmp_urb4"
 
 # processa com cpp
 cpp -P "$tmp_urb4" -I./build > "$tmp_urb"
@@ -17,4 +20,4 @@ cpp -P "$tmp_urb4" -I./build > "$tmp_urb"
 cat "$tmp_urbin"
 
 # opcional: remove os temporários ao sair
-trap 'rm -f "$tmp_urb" "$tmp_urb4" "$tmp_urbin"' EXIT
+trap 'rm -f "$tmp_urb" "$tmp_urb4" "$tmp_urbin" "$tmp_pl"' EXIT

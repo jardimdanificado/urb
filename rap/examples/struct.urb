@@ -37,7 +37,8 @@ define({{Person_print}},
     }}
 )
 
-local(person_local, 
+local person_local
+{
     p_has: \has
     p_is: \is
     p_age: \years\sold
@@ -49,9 +50,9 @@ local(person_local,
     joao_name: \joao
 
     Person(joao)
-)
+}
 
-scope(main,
+scope main {
     set(mem, joao.name, pointer(mem, joao_name))
     set(mem, joao.age, 21)
     set(mem, joao.weight, 78)
@@ -61,6 +62,6 @@ scope(main,
 
     // class simutation
     joao_print()
-)
+}
 
 

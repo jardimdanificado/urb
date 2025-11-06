@@ -1,13 +1,15 @@
 include(urb_dictionary.h)
 
-local(data,
+local data {
     a: 50
     b: 123
-    str: \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n)
+    str: \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n
+}
     
-scope(main, 
+scope main { 
     println($b)
     println($a)
     println(main)
     pring(pointer(mem, str))
-    ls(mem))
+    ls(mem)
+}

@@ -78,13 +78,17 @@ define({{dowhile}}, {{
 }})
 
 dnl ====================================
-dnl if(cond, body)
+dnl if(cond, true, else)
 dnl ====================================
 define({{if}}, {{
     define({{id}}, {{if_id}})
-    jumpif(not($1), {{if_}}id{{_end}})
-    scope({{if_}}id, $2)
-    {{if_}}id{{_end}}:
+
+    jumpif($1, {{if_true_}}id)
+    dnl else 
+    scope({{if_false_}}id, $3)
+    jumpif(1, {{if_}}id{{_after}})
+    scope({{if_true_}}id, $2)
+    {{if_}}id{{_after}}:
     define({{if_id}}, {{incr(if_id)}})
 }})
 
