@@ -1,4 +1,4 @@
-str [\hello\sworld!\n]
+str ["hello world!\n"]
 
 if (ge(1, 900))
 {

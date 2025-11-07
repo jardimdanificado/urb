@@ -8,10 +8,10 @@ tmp_urbin=$(mktemp /tmp/temp.urbin.XXXXXX)
 # run scripts to generate urb.c
 ./rap/scripts/gen_urb_c.sh $LIBS
 
-# compile the bytecode assembler(urbc)
-gcc -o urbc rap/src/assembler.c -g -I. -lm -O3
+# compile the bytecode assembler(beatmaker)
+gcc -o beatmaker rap/src/assembler.c -g -I. -lm -O3
 
-./rap/scripts/compile.sh "$SOURCE_FILE" > "$tmp_urbin"
+./rap/scripts/assemble.sh "$SOURCE_FILE" > "$tmp_urbin"
 ./rap/scripts/gen_embedded_c.sh "$tmp_urbin" > build/embedded.c
 
 gcc -o $tmp_urb build/embedded.c -g -I. -lm -O3

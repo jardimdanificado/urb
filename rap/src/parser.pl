@@ -81,16 +81,17 @@ sub add_scope_and_local {
 
     return $out;
 }
-
 # --- conversão de strings "..." para \... (sem barra final) ---
 $src =~ s{
     "                                  # abre aspas
     (                                  # captura conteúdo
-        (?: \\. | [^"\\] )*            # qualquer escape \. ou caractere comum
+        (?: \\. | [^"\\] | \n )*       # aceita escapes, texto normal e quebras de linha
     )
     "                                  # fecha aspas
 }{
     my $str = $1;
+    # converte quebras de linha em \n
+    $str =~ s/\n/\\n/g;
     # converte espaços em \s
     $str =~ s/ /\\s/g;
     # remove aspas internas, se houver

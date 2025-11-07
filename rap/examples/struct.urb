@@ -40,15 +40,15 @@ define({{Person_print}},
 )
 
 person_local [
-    p_has: \has
-    p_is: \is
-    p_age: \years\sold
-    p_w: \kg
-    p_h: \centimeters
-    p_tall: \tall
-    p_a: \a
-    p_space: \\s
-    joao_name: \joao
+    p_has: "has"
+    p_is: "is"
+    p_age: "years old"
+    p_w: "kg"
+    p_h: "centimeters"
+    p_tall: "tall"
+    p_a: "a"
+    p_space: "\s"
+    joao_name: "joao"
 
     Person(joao)
 ]

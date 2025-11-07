@@ -2,6 +2,7 @@
 // urb.c is a generated file
 #include "../../build/urb.c"
 #include "stdarg.h"
+#include <stddef.h>
 
 // file stuff
 char* file_read(char *filename)
@@ -76,11 +77,11 @@ List* str_split(char *str, char *delim)
         urb_push(splited, (Value){.p = str_duplicate(token)});
         token = strtok(NULL, delim);
     }
+    free(newstring);
 
     return splited;
 }
 
-#include <stddef.h>
 static Int escaped_length(const char *token)
 {
     Int len = 0;
@@ -388,6 +389,15 @@ static inline List* rap_assemble(char* input_str)
         }
         free(token);
     }
+
+    while(label_names->size >  0)
+    {
+        free(urb_pop(label_names).p);
+    }
+    
+    urb_free(label_names);
+    urb_free(label_values);
+    urb_free(tokens);
     return code;
 }
 
@@ -400,20 +410,21 @@ int main(int argc, char* argv[])
     
     char* file_content = file_read(argv[1]);
     
-    List* compiled = rap_assemble(file_content);
+    List* assembled = rap_assemble(file_content);
     
-    char* binary = malloc(sizeof(Int) * (compiled->size + 1));
+    char* binary = malloc(sizeof(Int) * (assembled->size + 1));
 
-    Int normalized_size = compiled->size;
+    Int normalized_size = assembled->size;
 
     // we copy the metadata(.size and .capacity)
     memcpy(binary, &normalized_size, sizeof(Int));
     
     // we copy the content(.data)
-    memcpy(binary + sizeof(Int), compiled->data, compiled->size * sizeof(Int));
+    memcpy(binary + sizeof(Int), assembled->data, assembled->size * sizeof(Int));
 
-    fwrite(binary, sizeof(Int), compiled->size + 1, stdout);
+    fwrite(binary, sizeof(Int), assembled->size + 1, stdout);
     free(file_content);
-    urb_free(compiled);
+    urb_free(assembled);
+    free(binary);
     return 0;
 };

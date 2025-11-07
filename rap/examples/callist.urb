@@ -3,7 +3,7 @@ define(callist, {{interpret(exec, $1, stack)}})
 
 data [
     i: 0
-    str: \hello\sworld!\n
+    str: "hello world!\n"
     list: 0
     test_proc {
         pring(pointer(mem, sub(str, data)))

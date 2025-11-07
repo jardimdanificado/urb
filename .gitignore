@@ -7,4 +7,7 @@ bruter.h
 *.exe
 *.urbin
 build
+# interpreter
 rapper
+# assembler
+beatmaker

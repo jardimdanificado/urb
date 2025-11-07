@@ -17,7 +17,12 @@ m4 "$tmp_urb_pl" -I./build > "$tmp_urb4"
 cpp -P "$tmp_urb4" -I./build > "$tmp_urb"
 
 # gera binário
-./urbc "$tmp_urb" > "$tmp_urbin"
+valgrind \
+          --leak-check=full \
+          --show-leak-kinds=all \
+          --track-origins=yes \
+          --log-file=./valgrind-out-assembler.txt \
+          --verbose ./beatmaker "$tmp_urb" > "$tmp_urbin"
 
 cat "$tmp_urbin"
 
