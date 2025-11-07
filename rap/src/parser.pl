@@ -82,6 +82,28 @@ sub add_scope_and_local {
     return $out;
 }
 
+# --- conversão de strings "..." para \... (sem barra final) ---
+$src =~ s{
+    "                                  # abre aspas
+    (                                  # captura conteúdo
+        (?: \\. | [^"\\] )*            # qualquer escape \. ou caractere comum
+    )
+    "                                  # fecha aspas
+}{
+    my $str = $1;
+    # converte espaços em \s
+    $str =~ s/ /\\s/g;
+    # remove aspas internas, se houver
+    $str =~ s/"//g;
+    # adiciona só a barra inicial
+    "\\$str"
+}egx;
+# --- fim da conversão ---
+
+# --- remove comentários estilo // até o fim da linha ---
+$src =~ s{//[^\n\r]*}{}g;
+# --- fim da remoção ---
+
 $src = add_scope_and_local($src);
 
 # garantir que pos começa em zero

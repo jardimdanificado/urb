@@ -55,7 +55,7 @@ enum {
 // we have 8 reserved values
 // we have 3 special opcodes: jif, exec and mem
 // the the other 5 are unused, user may use it as placeholder for something
-// this hack is used by the rap compiler, where int_min + 3 is the args list
+// this hack is used by the rap assembler, where int_min + 3 is the args list
 #define OP_CODES_OFFSET 8
 
 typedef struct List List;

@@ -81,44 +81,69 @@ List* str_split(char *str, char *delim)
 }
 
 #include <stddef.h>
-
-// calcula o tamanho necessário (sem contar o terminador \0)
-size_t escaped_length(const char *token)
+static Int escaped_length(const char *token)
 {
-    size_t len = 0;
-    size_t i = 1; // começa em 1 porque o primeiro é '\\'
-
-    while (token[i] != 0)
+    Int len = 0;
+    for (Int i = 1; token[i] && token[i] != '"'; i++)
     {
-        char c = token[i];
-        if (c == '\\')
+        if (token[i] == '\\')
         {
             i++;
+            if (!token[i]) break;
+
             switch (token[i])
             {
-                case '\\':
-                case 's':
-                case 'n':
-                case 't':
-                case 'r':
-                    // todas representam um único caractere
-                    break;
-                case 0:
-                    // string termina logo após '\'
-                    i--; // ajusta como o código original
-                    break;
+                case 'x': {
+                    // hexadecimal escape: \xNN...
+                    int count = 0;
+                    while (isxdigit(token[i + 1]) && count < 2) {
+                        i++;
+                        count++;
+                    }
+                    len++;
+                } break;
+
+                case 'u': {
+                    // \uXXXX (opcional)
+                    int count = 0;
+                    while (isxdigit(token[i + 1]) && count < 4) {
+                        i++;
+                        count++;
+                    }
+                    len++;
+                } break;
+
+                case 'U': {
+                    // \UXXXXXXXX (opcional)
+                    int count = 0;
+                    while (isxdigit(token[i + 1]) && count < 8) {
+                        i++;
+                        count++;
+                    }
+                    len++;
+                } break;
+
+                case '0': case '1': case '2': case '3':
+                case '4': case '5': case '6': case '7': {
+                    // octal escape: \nnn (até 3 dígitos)
+                    int count = 0;
+                    while (token[i + 1] >= '0' && token[i + 1] <= '7' && count < 2) {
+                        i++;
+                        count++;
+                    }
+                    len++;
+                } break;
+
                 default:
-                    // '\x' desconhecido, conta como 1
+                    len++;
                     break;
             }
         }
-
-        len++;
-        i++;
+        else len++;
     }
-
     return len;
 }
+
 
 Int bytecount_to_wordcount(Int bytecount)
 {
@@ -131,7 +156,7 @@ Int bytecount_to_wordcount(Int bytecount)
     return values_needed;
 }
 
-static inline List* urb_preprocess(char* input_str)
+static inline List* rap_assemble(char* input_str)
 {
     List* code = urb_new(URB_DEFAULT_SIZE);
     List* label_values = urb_new(URB_DEFAULT_SIZE);
@@ -223,8 +248,7 @@ static inline List* urb_preprocess(char* input_str)
             }
             break;
 
-            case '\\':
-            {
+            case '\\': {
                 Int temp_result_size = escaped_length(token) + sizeof(Int);
                 char *result_str = malloc(temp_result_size);
                 if (!result_str) abort();
@@ -232,43 +256,76 @@ static inline List* urb_preprocess(char* input_str)
                 Int current_char = 0;
                 Int i = 1;
 
-                while (current_char < temp_result_size)
+                while (token[i] && token[i] != '"' && current_char < temp_result_size)
                 {
                     char c = token[i];
+
                     if (c == '\\')
                     {
                         i++;
+                        if (!token[i]) break;
+
                         switch (token[i])
                         {
+                            case 'n': c = '\n'; break;
+                            case 't': c = '\t'; break;
+                            case 'r': c = '\r'; break;
+                            case 'v': c = '\v'; break;
+                            case 'f': c = '\f'; break;
+                            case 'a': c = '\a'; break;
+                            case 'b': c = '\b'; break;
+                            case 's': c = ' '; break;
                             case '\\': c = '\\'; break;
-                            case 's':  c = ' ';  break;
-                            case 'n':  c = '\n'; break;
-                            case 't':  c = '\t'; break;
-                            case 'r':  c = '\r'; break;
-                            case 0:    c = '\\'; i--; break;
-                            default:   c = token[i]; break; 
+                            case '"': c = '"'; break;
+                            case '\'': c = '\''; break;
+
+                            case 'x': {
+                                i++;
+                                int val = 0, count = 0;
+                                while (isxdigit(token[i]) && count < 2) {
+                                    char d = token[i++];
+                                    val = val * 16 + (isdigit(d) ? d - '0' : (tolower(d) - 'a' + 10));
+                                    count++;
+                                }
+                                i--;
+                                c = (char)val;
+                            } break;
+
+                            case '0': case '1': case '2': case '3':
+                            case '4': case '5': case '6': case '7': {
+                                int val = token[i] - '0';
+                                int count = 0;
+                                while (token[i + 1] >= '0' && token[i + 1] <= '7' && count < 2) {
+                                    i++;
+                                    val = (val * 8) + (token[i] - '0');
+                                    count++;
+                                }
+                                c = (char)val;
+                            } break;
+
+                            default:
+                                c = token[i];
+                                break;
                         }
                     }
 
                     result_str[current_char++] = c;
-
                     i++;
                 }
 
                 result_str[current_char] = '\0';
 
                 Int values_needed = bytecount_to_wordcount(temp_result_size);
-
                 Int starting_index = code->size;
 
                 for (Int j = 0; j < values_needed; j++)
                     urb_push(code, (Value){.i = 0});
 
-                memcpy(&code->data[starting_index], result_str, temp_result_size);
-
+                memcpy(&code->data[starting_index], result_str, current_char + 1);
                 free(result_str);
-            }
+            } 
             break;
+
 
             default:
             {
@@ -343,7 +400,7 @@ int main(int argc, char* argv[])
     
     char* file_content = file_read(argv[1]);
     
-    List* compiled = urb_preprocess(file_content);
+    List* compiled = rap_assemble(file_content);
     
     char* binary = malloc(sizeof(Int) * (compiled->size + 1));
 
