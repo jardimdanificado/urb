@@ -62,7 +62,7 @@ case "$command" in
 
     ;;
 
-  run|-f)
+  run)
     while [[ $# -gt 0 ]]; do
       case "$1" in
         -*)
@@ -77,7 +77,7 @@ case "$command" in
     ./rapper "${args[@]}"
     ;;
 
-  help|-h)
+  help)
     cat <<EOF
 Usage: $0 <command> [options] [args]
 
@@ -86,14 +86,14 @@ Commands:
       -o FILE    Specify output file
       -S FILE    Prevent assembling
       -c FILE    Just assemble
-  run (-f)       Run a program
-  help (-h)      Show this help
-  version (-v)   Show version info
+  run            Run a program
+  help           Show this help
+  version        Show version info
 EOF
     ;;
 
-  version|-v)
-    echo "script version 1.0.0"
+  version)
+    echo "alpha, based on urb 0.9.4a"
     ;;
 
   *)

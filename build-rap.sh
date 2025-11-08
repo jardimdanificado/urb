@@ -1,5 +1,4 @@
 #!/bin/bash
-
 if [[ ! -v makeself ]]; then
     if [ -e "./makeself" ]; then
         makeself=./makeself/makeself.sh 
@@ -28,9 +27,9 @@ cp build/urb_dictionary.h build/urb_tar/build/
 
 cp rap/scripts/preprocess.sh build/urb_tar/rap/scripts/
 cp rap/scripts/assemble.sh build/urb_tar/rap/scripts/
-cp rap/scripts/rap_frontend.sh build/urb_tar/rap/scripts/
+cp rap/scripts/frontend.sh build/urb_tar/rap/scripts/
 cp rap/src/reverse.h build/urb_tar/rap/src/
 cp rap/src/parser.pl build/urb_tar/rap/src/
 cp rap/src/syntax.m4 build/urb_tar/rap/src/
 
-$makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/rap_frontend.sh
+$makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/frontend.sh
