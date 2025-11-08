@@ -1,6 +1,11 @@
 #!/bin/bash
 mkdir -p build
 
-./rap/scripts/embed.sh "rap/src/interpreter.urb" "lib/*/*" > rapper
+LIBS="libs/*/*"
 
+if [[ -n "$1" ]]; then
+    LIBS="$1"
+fi
+
+./rap/scripts/embed.sh "rap/src/interpreter.urb" "$LIBS > rapper
 chmod +x rapper

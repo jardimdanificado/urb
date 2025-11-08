@@ -9,6 +9,8 @@ if [[ ! -v makeself ]]; then
     fi
 fi
 
+LIBS="${2:-libs/*/*}"
+
 mkdir -p build
 rm -rf build/urb_tar
 rm -rf build/rap
@@ -18,7 +20,7 @@ mkdir -p build/urb_tar/rap/
 mkdir -p build/urb_tar/rap/src/
 mkdir -p build/urb_tar/rap/scripts/
 
-./rap/scripts/gen_interpreter.sh
+./rap/scripts/gen_interpreter.sh "$LIBS"
 
 cp rapper build/urb_tar/
 cp beatmaker build/urb_tar/

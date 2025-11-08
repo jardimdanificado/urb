@@ -12,17 +12,25 @@ rap has no versioning, i cant even decide which is its main file, probably synta
 ## requirements
 
 in case you using the urb language you will need:
-- a *gcc compatible* C compiler
-- GNU m4, i guess other m4 implementation might work as well
-- perl 5.14 or newer
-- bash, sed, xxd etc...
+- a **gcc** *compatible* C compiler
+- GNU **m4**, i guess other m4 implementation might work as well, but i havent tested
+- **perl** 5.14 or newer
+- **make**, this one is optional if you call the scripts directly
+- **makeself**, we use this one to create the standalone
+- **bash**, **sed**, **xxd** etc...
 
-any decent linux system will already have all that bundled in;
+any decent linux system will already have all that bundled in, beside makeself, but it repo is cloned during the compilation if nor found
 
 ## compiling
 
-from the **urb** folder, call:
+to compile the default interpreter:
 
-``./rap/scripts/embed.sh "$filename" "lib/*/*" > execfile``
+``make libs=LIBS``
 
-it will get a executable called execfile.
+note libs argument is completely optional, it defaults to "libs/\*/\*"
+
+if you wanna compile as embedded debug:
+
+``make debug filename=FILENAME libs=LIBS``
+
+you will find the exec at build/main

@@ -5,7 +5,7 @@ if (( $# < 1 )); then
 fi
 
 mkdir -p build
-./rap/scripts/embed.sh "$1" "lib/*/*" > ./build/main
+./rap/scripts/embed.sh "$1" "$2" > ./build/main
 chmod +x ./build/main
 
 # check valgrind-out.txt for the debug output

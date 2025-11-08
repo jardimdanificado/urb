@@ -93,7 +93,7 @@ EOF
     ;;
 
   version)
-    echo "alpha, based on urb 0.9.4a"
+    echo "rap pre-alpha, based on urb 0.9.4a"
     ;;
 
   *)

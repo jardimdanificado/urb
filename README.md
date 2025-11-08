@@ -7,7 +7,7 @@ rap is the urb language, check its proper readme at rap/README.md
 # compiling
 urb cannot be standalone compiled because it is just a 250 line header, no interpreter frontend, no opcodes, just the minimal the vm needs to get going.
 
-in lib/std you can find some libs written for the VM, function pointers must be added in the exec list in order to be recognized as opcodes;
+in libs/std you can find some libs written for the VM, function pointers must be added in the exec list in order to be recognized as opcodes;
 
 # the interpreter
 the interpreter consists in a function that receives 3 arguments: exec, mem and stack.
