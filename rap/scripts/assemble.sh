@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+mkdir -p ./.tmp/
+
 # cria arquivos temporários seguros
-tmp_urbin=$(mktemp /tmp/temp.urbin.XXXXXX)
+tmp_urbin=$(mktemp ./.tmp/temp.urbin.XXXXXX)
 
 # gera binário
 ./beatmaker "$1" > "$tmp_urbin"

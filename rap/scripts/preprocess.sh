@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+mkdir -p ./.tmp/
+
 # cria arquivos temporários seguros
-tmp_urb4=$(mktemp /tmp/temp.urb.XXXXXX)
-tmp_urb_pl=$(mktemp /tmp/temp.urb.XXXXXX)
+tmp_urb4=$(mktemp ./.tmp/temp.urb.XXXXXX)
+tmp_urb_pl=$(mktemp ./.tmp/temp.urb.XXXXXX)
 
 echo "include(urb_dictionary.h)" > "$tmp_urb_pl"
 

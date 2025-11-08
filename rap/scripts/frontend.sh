@@ -104,7 +104,7 @@ Commands:
   compile        Compile a source file
       -o FILE    Specify output file
       -S FILE    Generate .suburb
-      -c FILE    Assemble a .surburb
+      -c FILE    Assemble a .suburb
   run            Run a program
   help           Show this help
   version        Show version info

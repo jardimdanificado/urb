@@ -1,12 +1,13 @@
-.PHONY: all clean debug install unsintall help
+.PHONY: all clean debug install uninstall help
 libs ?= libs/*/*
+path ?= /usr/local/bin/
 all:
 	./rap/scripts/build-rap.sh
-	@echo "if everything went ok exec can be found at build/rap"
+	@echo "if everything went fine exec can be found at build/rap"
 clean:
 	-rm -rf build rapper beatmaker makeself
 	-rm ./valgrind-out*
-
+	-rm -rf ./.tmp/*
 debug:
 ifndef filename
 	$(error filename missing! use: make debug filename=<file>)
@@ -15,10 +16,10 @@ endif
 	./rap/scripts/debug.sh "$(filename)" "$(libs)"
 
 install: all
-	sudo cp build/rap /usr/local/bin/
+	sudo cp build/rap "$(path)"
 
 uninstall:
-	sudo rm /usr/local/bin/rap
+	sudo rm "$(path)"rap
 
 help:    # show this help message
 	@echo "Available targets:"

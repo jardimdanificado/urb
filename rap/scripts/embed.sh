@@ -2,10 +2,12 @@
 SOURCE_FILE="$1"
 LIBS="$2"
 
-tmp_urb=$(mktemp /tmp/temp.urb.XXXXXX)
-tmp_urb_exec=$(mktemp /tmp/temp.urb.exe.XXXXXX)
-tmp_urbin=$(mktemp /tmp/temp.urbin.XXXXXX)
-tmp_pre=$(mktemp /tmp/temp.urbin.XXXXXX)
+mkdir -p ./.tmp/
+
+tmp_urb=$(mktemp ./.tmp/temp.urb.XXXXXX)
+tmp_urb_exec=$(mktemp ./.tmp/temp.urb.exe.XXXXXX)
+tmp_urbin=$(mktemp ./.tmp/temp.urbin.XXXXXX)
+tmp_pre=$(mktemp ./.tmp/temp.urbin.XXXXXX)
 
 ./rap/scripts/compile_assembler.sh "$LIBS"
 ./rap/scripts/preprocess.sh "$SOURCE_FILE" > "$tmp_pre"

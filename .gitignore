@@ -7,6 +7,8 @@ bruter.h
 *.exe
 *.urbin
 build
+.tmp
+makeself
 # interpreter
 rapper
 # assembler
