@@ -34,4 +34,10 @@ cp rap/src/reverse.h build/urb_tar/rap/src/
 cp rap/src/parser.pl build/urb_tar/rap/src/
 cp rap/src/syntax.m4 build/urb_tar/rap/src/
 
-$makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/frontend.sh
+$makeself --nocomp --nomd5 --nocrc ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/frontend.sh
+
+# we need to force it to be quiet, otherwise we would need to pass --quiet every call
+# we also turn on the "nodiskspace"
+sed -i 's/quiet="n"/quiet=y/' build/rap
+sed -i 's/noprogress=n/noprogress=y/' build/rap
+sed -i 's/nodiskspace="n"/nodiskspace=y/' build/rap

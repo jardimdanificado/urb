@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-
 # Default values
 DONT_ASSEMBLE=""
 JUST_ASSEMBLE=""
@@ -15,8 +13,13 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
-command="$1"
-shift
+# Se o primeiro argumento termina com .rap, assume "run"
+if [[ $# -ge 1 ]] && [[ $1 == *.urb || $1 == *.rap || $1 == *.suburb ]]; then
+    command="run"
+else
+    command="$1"
+    shift
+fi
 
 case "$command" in
   compile)
@@ -46,14 +49,14 @@ case "$command" in
       shift
     done
 
-    extension=".urb"
+    extension=".suburb"
 
     if [[ -n "$JUST_ASSEMBLE" ]]; then
         # Só assemble
         ./rap/scripts/assemble.sh "${args[@]}" > "$USER_PWD/$output"
     elif [[ -n "$DONT_ASSEMBLE" ]]; then
         # Só preprocessa
-        ./rap/scripts/preprocess.sh "${args[@]}" > "$USER_PWD/$output$extension"
+        ./rap/scripts/preprocess.sh "${args[@]}" > "$USER_PWD/$output"
     else
         # Compila completo
         ./rap/scripts/preprocess.sh "${args[@]}" > "$USER_PWD/$output$extension"
@@ -63,18 +66,34 @@ case "$command" in
     ;;
 
   run)
+  NEED_TO_ASSEMBLE=""
     while [[ $# -gt 0 ]]; do
       case "$1" in
+        -p)
+            NEED_TO_ASSEMBLE=1
+          ;;
         -*)
           echo "Unknown option for run: $1" >&2
           ;;
         *)
+
+          if [[ $1 == *.rap || $1 == *.suburb ]]; then
+              NEED_TO_ASSEMBLE=1
+          fi
           args+=("$USER_PWD/$1")
           ;;
       esac
       shift
     done
-    ./rapper "${args[@]}"
+    
+    if [[ -n "$NEED_TO_ASSEMBLE" ]]; then
+      ./rap/scripts/preprocess.sh "${args[@]}" > "tmp.suburb"
+      ./rap/scripts/assemble.sh "tmp.suburb" > "tmp.urb"
+      ./rapper "tmp.urb"
+    else
+      ./rapper "${args[@]}"
+    fi
+    
     ;;
 
   help)
