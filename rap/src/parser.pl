@@ -81,6 +81,7 @@ sub add_scope_and_local {
 
     return $out;
 }
+
 # --- conversão de strings "..." para \... (sem barra final) ---
 $src =~ s{
     "                                  # abre aspas

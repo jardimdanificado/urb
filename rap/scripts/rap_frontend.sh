@@ -1,107 +1,104 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-usage() {
-  cat <<EOF
-Usage: ${0##*/} <command> [options] [args...]
 
-Commands (and short aliases):
-  compile (-c)   Compile a source file. Supports option -o <output>.
-  run     (-r)   Run a program.
-  help    (-h)   Show this help message.
-  version (-v)   Show version information.
-
-Examples:
-  ${0##*/} compile -o app.bin main.rap
-  ${0##*/} run app.bin
-EOF
-}
-
-version() {
-  echo "${0##*/} version 1.0.0"
-}
-
-command=""
+# Default values
+DONT_ASSEMBLE=""
+JUST_ASSEMBLE=""
 output=""
-forward_args=()
+command=""
+args=()
 
-# Detect command or alias
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    compile|-c) command="compile"; shift; break ;;
-    run|-r)     command="run"; shift; break ;;
-    help|-h)    command="help"; shift; break ;;
-    version|-v) command="version"; shift; break ;;
-    *)          forward_args+=("$1"); shift ;;
-  esac
-done
-
-# Default to help if no command provided
-if [[ -z "${command:-}" ]]; then
-  command="help"
+# Parse the first argument as command
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 <command> [options] [args]"
+  exit 1
 fi
+
+command="$1"
+shift
 
 case "$command" in
   compile)
-    # Parse options for 'compile'
-    while getopts ":o:" opt; do
-      case "$opt" in
-        o) output="$OPTARG" ;;
-        :) echo "Error: option -$OPTARG requires an argument" >&2; exit 2 ;;
-        \?) forward_args+=("-$OPTARG") ;;
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -o)
+          shift
+          output="${1:-}"
+          if [[ -z "$output" ]]; then
+            echo "Error: -o requires a filename" >&2
+            exit 1
+          fi
+          ;;
+        -S)
+          DONT_ASSEMBLE=1
+          ;;
+        -c)
+          JUST_ASSEMBLE=1
+          ;;
+        -*)
+          echo "Unknown option for compile: $1" >&2
+          ;;
+        *)
+          args+=("$USER_PWD/$1")
+          ;;
       esac
+      shift
     done
-    shift $((OPTIND - 1))
 
-    # The next argument should be the input file
-    input_file="${1:-}"
-    [[ -z "$input_file" ]] && { echo "Error: missing input file for compile"; exit 1; }
-    shift
+    extension=".urb"
 
-    forward_args+=("$@")
+    if [[ -n "$JUST_ASSEMBLE" ]]; then
+        # Só assemble
+        ./rap/scripts/assemble.sh "${args[@]}" > "$USER_PWD/$output"
+    elif [[ -n "$DONT_ASSEMBLE" ]]; then
+        # Só preprocessa
+        ./rap/scripts/preprocess.sh "${args[@]}" > "$USER_PWD/$output$extension"
+    else
+        # Compila completo
+        ./rap/scripts/preprocess.sh "${args[@]}" > "$USER_PWD/$output$extension"
+        ./rap/scripts/assemble.sh "$USER_PWD/$output$extension" > "$USER_PWD/$output"
+    fi
 
-    echo "Command: compile"
-    echo "Input file: $input_file"
-    echo "Output: ${output:-<none>}"
-    echo "Forwarded args: ${forward_args[*]-}"
-
-    ##############################################################
-    # >>> PLACE YOUR COMPILE LOGIC HERE <<<
-    # Example:
-    # rapc "$input_file" -o "${output:-a.out}" "${forward_args[@]}"
-    ##############################################################
     ;;
 
-  run)
-    # The next argument should be the program to run
-    program="${1:-}"
-    [[ -z "$program" ]] && { echo "Error: missing program name for run"; exit 1; }
-    shift
-
-    forward_args+=("$@")
-
-    echo "Command: run"
-    echo "Program: $program"
-    echo "Forwarded args: ${forward_args[*]-}"
-
-    ##############################################################
-    # >>> PLACE YOUR RUN LOGIC HERE <<<
-    # Example:
-    # ./rapvm "$program" "${forward_args[@]}"
-    ##############################################################
+  run|-f)
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -*)
+          echo "Unknown option for run: $1" >&2
+          ;;
+        *)
+          args+=("$USER_PWD/$1")
+          ;;
+      esac
+      shift
+    done
+    ./rapper "${args[@]}"
     ;;
 
-  help)
-    usage
+  help|-h)
+    cat <<EOF
+Usage: $0 <command> [options] [args]
+
+Commands:
+  compile        Compile a source file
+      -o FILE    Specify output file
+      -S FILE    Prevent assembling
+      -c FILE    Just assemble
+  run (-f)       Run a program
+  help (-h)      Show this help
+  version (-v)   Show version info
+EOF
     ;;
 
-  version)
-    version
+  version|-v)
+    echo "script version 1.0.0"
     ;;
 
   *)
     echo "Unknown command: $command" >&2
-    usage
+    echo "Try '$0 help' for usage."
     exit 1
     ;;
 esac

@@ -4,7 +4,7 @@
 tmp_urb4=$(mktemp /tmp/temp.urb.XXXXXX)
 tmp_urb_pl=$(mktemp /tmp/temp.urb.XXXXXX)
 
-echo "include(urb_dictionary.h)\n\n" > "$tmp_urb_pl"
+echo "include(urb_dictionary.h)" > "$tmp_urb_pl"
 
 ./rap/src/parser.pl "$1" >> "$tmp_urb_pl"
 
