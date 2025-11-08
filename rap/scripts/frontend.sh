@@ -103,8 +103,8 @@ Usage: $0 <command> [options] [args]
 Commands:
   compile        Compile a source file
       -o FILE    Specify output file
-      -S FILE    Prevent assembling
-      -c FILE    Just assemble
+      -S FILE    Generate .suburb
+      -c FILE    Assemble a .surburb
   run            Run a program
   help           Show this help
   version        Show version info
@@ -112,7 +112,7 @@ EOF
     ;;
 
   version)
-    echo "rap pre-alpha, based on urb 0.9.4a"
+    echo "pre-alpha rap language, based on urb 0.9.4a"
     ;;
 
   *)
