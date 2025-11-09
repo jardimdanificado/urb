@@ -3,6 +3,7 @@ set -euo pipefail
 # Default values
 DONT_ASSEMBLE=""
 JUST_ASSEMBLE=""
+NEED_TO_ASSEMBLE=""
 output=""
 command=""
 args=()
@@ -66,7 +67,6 @@ case "$command" in
     ;;
 
   run)
-  NEED_TO_ASSEMBLE=""
     while [[ $# -gt 0 ]]; do
       case "$1" in
         -p)
@@ -94,6 +94,41 @@ case "$command" in
       ./rapper "${args[@]}"
     fi
     
+    ;;
+
+  embed)
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -o)
+          shift
+          output="${1:-}"
+          if [[ -z "$output" ]]; then
+            echo "Error: -o requires a filename" >&2
+            exit 1
+          fi
+          ;;
+        -*)
+          echo "Unknown option for run: $1" >&2
+          ;;
+        *)
+
+          if [[ $1 == *.rap || $1 == *.suburb ]]; then
+              NEED_TO_ASSEMBLE=1
+          fi
+          args+=("$USER_PWD/$1")
+          ;;
+      esac
+      shift
+    done
+
+    if [[ -n "$NEED_TO_ASSEMBLE" ]]; then
+      ./rap/scripts/preprocess.sh "${args[@]}" > "tmp.suburb"
+      ./rap/scripts/assemble.sh "tmp.suburb" > "tmp.urb"
+      ./rap/scripts/gen_embedded_c.sh "tmp.urb" > build/embedded.c
+    else
+      ./rap/scripts/gen_embedded_c.sh "${args[@]}" > build/embedded.c
+    fi
+    gcc -o "$USER_PWD/$output" build/embedded.c -g -I. -lm -O3
     ;;
 
   help)
