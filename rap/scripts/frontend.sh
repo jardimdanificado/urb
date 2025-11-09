@@ -4,9 +4,12 @@ set -euo pipefail
 DONT_ASSEMBLE=""
 JUST_ASSEMBLE=""
 NEED_TO_ASSEMBLE=""
+COMPILER="gcc -O3 -lm -g"
+DONT_COMPILE=""
 output=""
 command=""
 args=()
+MESSAGE="pre-alpha rap language, based on urb 0.9.4a"
 
 # Parse the first argument as command
 if [[ $# -lt 1 ]]; then
@@ -60,8 +63,8 @@ case "$command" in
         ./rap/scripts/preprocess.sh "${args[@]}" > "$USER_PWD/$output"
     else
         # Compila completo
-        ./rap/scripts/preprocess.sh "${args[@]}" > "$USER_PWD/$output$extension"
-        ./rap/scripts/assemble.sh "$USER_PWD/$output$extension" > "$USER_PWD/$output"
+        ./rap/scripts/preprocess.sh "${args[@]}" > "$output$extension"
+        ./rap/scripts/assemble.sh "$output$extension" > "$USER_PWD/$output"
     fi
 
     ;;
@@ -107,6 +110,18 @@ case "$command" in
             exit 1
           fi
           ;;
+        -C)
+          shift
+          DONT_COMPILE=1
+          ;;
+        -cc)
+          shift
+          COMPILER="${1:-}"
+          if [[ -z "$COMPILER" ]]; then
+            echo "Error: -cc requires a compiler" >&2
+            exit 1
+          fi
+          ;;
         -*)
           echo "Unknown option for run: $1" >&2
           ;;
@@ -128,26 +143,36 @@ case "$command" in
     else
       ./rap/scripts/gen_embedded_c.sh "${args[@]}" > build/embedded.c
     fi
-    gcc -o "$USER_PWD/$output" build/embedded.c -g -I. -lm -O3
+
+    if [[ -n "$DONT_COMPILE" ]]; then
+      cp build/embedded.c "$USER_PWD/$output"
+    else
+      "$COMPILER" -o "$USER_PWD/$output" build/embedded.c -I.
+    fi
     ;;
 
   help)
     cat <<EOF
+$MESSAGE
 Usage: $0 <command> [options] [args]
-
 Commands:
-  compile        Compile a source file
-      -o FILE    Specify output file
-      -S FILE    Generate .suburb
-      -c FILE    Assemble a .suburb
-  run            Run a program
-  help           Show this help
-  version        Show version info
+  compile           Compile a source file
+      -o FILE       Specify output file
+      -S FILE       Generate .suburb
+      -c FILE       Assemble a .suburb
+  embed             Compile standalone program
+      -o FILE       Specify output file
+      -cc COMPILER  Specify compiler
+      -C            Generate standalone .c
+  run               Run a program
+      -p FILE       Force assembling
+  help              Show this help
+  version           Show version info
 EOF
     ;;
 
   version)
-    echo "pre-alpha rap language, based on urb 0.9.4a"
+    echo "$MESSAGE"
     ;;
 
   *)
