@@ -229,7 +229,7 @@ static inline List* rap_assemble(char* input_str)
             }
             break;
 
-            case '$':
+            case '@':
             {
                 if (token[1] >= '0' && token[1] <= '9')
                 {

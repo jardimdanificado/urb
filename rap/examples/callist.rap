@@ -1,4 +1,4 @@
-define(callist, {{interpret(exec, $1, stack)}})
+define(callist, {{interpret(exec, @1, stack)}})
 
 
 data [
@@ -12,9 +12,9 @@ data [
 
 main {
     set(mem, list, sublist(mem, data, sub(main, data)))
-    callist($list)
+    callist(@list)
 }
 
 end {
-    free($list)
+    free(@list)
 }

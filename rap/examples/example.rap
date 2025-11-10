@@ -5,8 +5,8 @@ data [
 ]
     
 main { 
-    println($b)
-    println($a)
+    println(@b)
+    println(@a)
     println(main)
     pring(pointer(mem, str))
     ls(mem)

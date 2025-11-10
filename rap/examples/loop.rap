@@ -4,8 +4,8 @@
 // so technically, i points to the value 0
 i [0]
 
-while(le($i, 100000))
+while(le(@i, 100000))
 {
-    println($i)
-    set(mem, i, add($i, 1))
+    println(@i)
+    set(mem, i, add(@i, 1))
 }

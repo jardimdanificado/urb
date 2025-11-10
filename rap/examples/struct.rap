@@ -6,32 +6,32 @@ enum {
 
 define({{Person}}, 
     {{
-        struct($1, 
+        struct(@1, 
             name, 
             age, 
             weight, 
             height, 
             gender)
 
-        define($1{{_print}}, Person_print($1))
+        define(@1{{_print}}, Person_print(@1))
     }}
 )
 
 define({{Person_print}}, 
     {{
-        pring($$1.name)
+        pring(@$1.name)
         pring(string(p_space))
         pring(string(p_is))
         pring(string(p_space))
         pring(string(p_a))
         pring(string(p_space))
-        println($$1.gender)
+        println(@$1.gender)
 
-        pring($$1.name)
+        pring(@$1.name)
         pring(string(p_space))
         pring(string(p_is))
         pring(string(p_space))
-        print($$1.height)
+        print(@$1.height)
         pring(string(p_space))
         pring(string(p_h))
         pring(string(p_space))
@@ -61,7 +61,7 @@ scope main {
     set(mem, joao.gender, NB)
 
     
-    println($joao.age)
+    println(@joao.age)
 
     // class simutation
     joao_print()

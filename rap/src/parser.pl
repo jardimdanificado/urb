@@ -17,6 +17,72 @@ local $/;
 my $src = <>;
 $src = '' unless defined $src;
 
+# --- remove comentários estilo // até o fim da linha ---
+$src =~ s{//[^\n\r]*}{}g;
+# --- fim da remoção ---
+
+# --- coleta macros no estilo "macro name { ... }" (corrigido) ---
+my %macros;
+pos($src) = 0;
+while ($src =~ /\bmacro\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/gc) {
+    my $name = $1;
+    # posição do início do match ("m" de "macro")
+    my $match_start = $-[0];
+    # posição do '{' foi deixada em pos()-1
+    my $open_pos = pos($src) - 1;
+    my ($body, $pos_after) = extract_block($src, $open_pos, '{', '}');
+    # remove ENTIRE declaration: desde $match_start até pos_after
+    substr($src, $match_start, $pos_after - $match_start, '');
+    # reposiciona o cursor ao ponto onde removemos (pra continuar scanning)
+    pos($src) = $match_start;
+    # armazena o corpo tal como veio (sem a palavra 'macro' nem o nome)
+    $macros{$name} = $body;
+}
+# --- fim da coleta ---
+
+# --- expande chamadas de macro (suporta name(arg,...) ou name arg1 arg2 ...) ---
+for my $name (keys %macros) {
+    my $body = $macros{$name};
+
+    # repetimos a substituição até não haver mais ocorrências desta macro
+    # (evita expandir parcialmente em contextos estranhos)
+    1 while $src =~ s{
+        \b\Q$name\E\b                       # nome da macro
+        (?:                                  # dois estilos alternativos
+           \s*\(\s*([^()]*?)\s*\)            # 1) parênteses: name(a,b,c)
+         |                                   
+           (?:\s+([^\n{};()]+(?:\s+[^\n{};()]+)*))  # 2) espaço-separado: name a b c (até newline/;/{/})
+        )
+    }{
+        my $args_raw = defined $1 && length $1 ? $1 : $2;
+        # se for estilo com vírgulas (parênteses): split por ','
+        my @vals;
+        if (defined $1 && length $1) {
+            @vals = map { s/^\s+|\s+$//gr } split /,/, $args_raw, -1;
+        } else {
+            # estilo espaço-separado: remove espaço inicial e split por espaços
+            $args_raw =~ s/^\s+//;
+            @vals = map { s/^\s+|\s+$//gr } split /\s+/, $args_raw;
+        }
+
+        # faz as substituições de $1, $2
+        my $exp = $body;
+        for my $i (0 .. $#vals) {
+            my $n = $i + 1;
+            my $v = $vals[$i];
+            # protege barras e $ na inserção? deixar simples: substitui literais $n
+            $exp =~ s/\$\Q$n\E\b/$v/g;
+        }
+
+        # se houver placeholders não preenchidos, deixa vazio
+        $exp =~ s/[\$]\d+\b//g;
+
+        "$exp";   # opcional: envolver em parênteses para preservar precedência
+    }egx;
+}
+# --- fim da expansão ---
+
+
 sub add_scope_and_local {
     my ($src) = @_;
     my $out = '';
@@ -106,10 +172,6 @@ $src =~ s{
     "\\$str"
 }egx;
 # --- fim da conversão ---
-
-# --- remove comentários estilo // até o fim da linha ---
-$src =~ s{//[^\n\r]*}{}g;
-# --- fim da remoção ---
 
 $src = add_scope_and_local($src);
 
