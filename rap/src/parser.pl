@@ -52,6 +52,11 @@ sub add_scope_and_local {
             $out .= $&; $i += length($&); next;
         }
 
+        # ignora struct nome { ... }
+        if (substr($src, $i) =~ /\Astruct\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
+            $out .= $&; $i += length($&); next;
+        }
+
         # caso de "Nome {" → scope Nome {
         if (substr($src, $i) =~ /\A([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
             my $name = $1;
