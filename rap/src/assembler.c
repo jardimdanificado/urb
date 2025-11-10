@@ -406,6 +406,17 @@ int main(int argc, char* argv[])
     if (argc <= 1)
     {
         printf("you need to pass a filename.\n");
+        return 1;
+    }
+
+    if (strcmp(argv[1], "opcodes") == 0)
+    {
+        printf("available opcodes:\n");
+        for(Int i = 0; i < CUSTOM_FUNC_COUNT; i++)
+        {
+            printf("[%d] %s\n", i, custom_func_names[i]);
+        }
+        return 0;
     }
     
     char* file_content = file_read(argv[1]);

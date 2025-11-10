@@ -1,8 +1,8 @@
 .PHONY: all clean debug install uninstall help
-libs ?= libs/*/*
+libs ?= libs/*
 path ?= /usr/local/bin/
 all:
-	./rap/scripts/build-rap.sh
+	LIBS="libs/*" ./rap/scripts/build_rap.sh
 	@echo "if everything went fine exec can be found at build/rap"
 clean:
 	-rm -rf build rapper beatmaker makeself

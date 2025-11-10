@@ -151,6 +151,63 @@ case "$command" in
     fi
     ;;
 
+  rebuild)
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -r)
+          shift
+          TO_BE_REMOVED="${1:-}"
+          rm ./libs/$TO_BE_REMOVED
+          ;;
+        -R)
+          rm -rf ./libs/*
+          ;;
+        -L)
+          shift
+          LIBS_FOLDER="${1:-}"
+          cp -r $USER_PWD/$LIBS_FOLDER/* ./libs/
+          ;;
+        -l)
+          shift
+          FILE="${1:-}"
+          cp $USER_PWD/$FILE ./libs/
+          ;;
+        -o)
+          shift
+          output="${1:-}"
+          if [[ -z "$output" ]]; then
+            echo "Error: -o requires a filename" >&2
+            exit 1
+          fi
+          ;;
+        -*)
+          echo "Unknown option for run: $1" >&2
+          ;;
+        *)
+          args+=("$USER_PWD/$1")
+          ;;
+      esac
+      shift
+    done
+
+    if compgen -G "./libs/*" > /dev/null; then
+        echo "libs available:"
+        ls
+    else
+        echo "no libs available"
+        cp rap/src/blank.c libs/
+    fi
+
+    
+    if [[ -n "$output" ]]; then
+      make
+      cp ./build/rap "$output"
+    else
+      make install
+    fi
+
+    ;;
+
   help)
     cat <<EOF
 $MESSAGE
@@ -166,13 +223,38 @@ Commands:
       -C            Generate standalone .c
   run               Run a program
       -p FILE       Force assembling
+  rebuild           Recompile itself
+      -o FILE       Specify output file
+      -l FILE       Include lib file
+      -L FOLDER     Include lib folder
+      -r FILE       Remove lib
+      -R            Remove all libs
   help              Show this help
+  opcodes           Show opcodes
+  libs              Show libs
+  docs              Show opcodes and libs
   version           Show version info
 EOF
     ;;
 
   version)
     echo "$MESSAGE"
+    ;;
+
+  docs)
+    ./beatmaker docs
+    echo ""
+    echo "current libs:"
+    ls libs/
+    ;;
+  
+  libs)
+    echo "current libs:"
+    ls libs/
+    ;;
+
+  opcodes)
+    ./beatmaker opcodes
     ;;
 
   *)

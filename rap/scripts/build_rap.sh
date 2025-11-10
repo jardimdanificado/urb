@@ -9,7 +9,10 @@ if [[ ! -v makeself ]]; then
     fi
 fi
 
-LIBS="${2:-libs/*/*}"
+if [[ -z LIBS ]]; then 
+    LIBS="${2:-libs/*/*}"
+fi
+
 
 mkdir -p build
 rm -rf build/urb_tar
@@ -22,22 +25,21 @@ mkdir -p build/urb_tar/rap/scripts/
 
 ./rap/scripts/gen_interpreter.sh "$LIBS"
 
+cp -r libs build/urb_tar/
+
+cp Makefile build/urb_tar/
+
 cp rapper build/urb_tar/
 cp beatmaker build/urb_tar/
 cp urb.h build/urb_tar/
 cp build/urb_dictionary.h build/urb_tar/build/
 cp build/urb.c build/urb_tar/build/
 
-cp rap/scripts/preprocess.sh build/urb_tar/rap/scripts/
-cp rap/scripts/assemble.sh build/urb_tar/rap/scripts/
-cp rap/scripts/frontend.sh build/urb_tar/rap/scripts/
-cp rap/scripts/gen_embedded_c.sh build/urb_tar/rap/scripts/
-cp rap/src/reverse.h build/urb_tar/rap/src/
-cp rap/src/parser.pl build/urb_tar/rap/src/
-cp rap/src/syntax.m4 build/urb_tar/rap/src/
-cp rap/src/boilerplate.c build/urb_tar/rap/src/
+cp -r rap/scripts build/urb_tar/rap/
+cp -r rap/src build/urb_tar/rap/
+cp -r makeself build/urb_tar/
 
-$makeself --nocomp --nomd5 --nocrc ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/frontend.sh
+$makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/frontend.sh
 
 # we need to force it to be quiet, otherwise we would need to pass --quiet every call
 # we also turn on the "nodiskspace"
