@@ -153,21 +153,51 @@ sub add_scope_and_local {
     return $out;
 }
 
-# --- conversão de strings "..." para \... (sem barra final) ---
+# --- conversão de strings "..." para pointers + defs automáticos ---
+{
+    my @defs;
+    my $counter = 0;
+
+    $src =~ s{
+        "                                  # abre aspas
+        (                                  # captura conteúdo
+            (?: \\. | [^"\\] | \n )*       # aceita escapes, texto normal e quebras de linha
+        )
+        "                                  # fecha aspas
+    }{
+        my $content = $1;
+        my $id = "_unamed_string$counter";
+        $counter++;
+
+        # formata conteúdo
+        $content =~ s/\n/\\n/g;
+        $content =~ s/ /\\s/g;
+
+        push @defs, "${id} [\\$content]";
+
+        "pointer(mem, $id)";
+    }egx;
+
+    if (@defs) {
+        # insere as definições no início do arquivo
+        $src = join("\n", @defs) . "\n" . $src;
+    }
+}
+# --- fim da conversão ---
+
+# --- conversão de strings `...` para \... (sem barra final) ---
 $src =~ s{
-    "                                  # abre aspas
-    (                                  # captura conteúdo
-        (?: \\. | [^"\\] | \n )*       # aceita escapes, texto normal e quebras de linha
+    `                                   # abre crase
+    (                                   # captura conteúdo
+        (?: \\. | [^`\\] | \n )*        # aceita escapes, texto normal e quebras de linha
     )
-    "                                  # fecha aspas
+    `                                   # fecha crase
 }{
     my $str = $1;
     # converte quebras de linha em \n
     $str =~ s/\n/\\n/g;
     # converte espaços em \s
     $str =~ s/ /\\s/g;
-    # remove aspas internas, se houver
-    $str =~ s/"//g;
     # adiciona só a barra inicial
     "\\$str"
 }egx;

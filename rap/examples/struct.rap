@@ -4,67 +4,29 @@ enum {
     FEMALE
 }
 
-define({{Person}}, 
-    {{
-        struct(@1, 
-            name, 
-            age, 
-            weight, 
-            height, 
-            gender)
-
-        define(@1{{_print}}, Person_print(@1))
-    }}
-)
-
-define({{Person_print}}, 
-    {{
-        pring(@$1.name)
-        pring(string(p_space))
-        pring(string(p_is))
-        pring(string(p_space))
-        pring(string(p_a))
-        pring(string(p_space))
-        println(@$1.gender)
-
-        pring(@$1.name)
-        pring(string(p_space))
-        pring(string(p_is))
-        pring(string(p_space))
-        print(@$1.height)
-        pring(string(p_space))
-        pring(string(p_h))
-        pring(string(p_space))
-        pringln(string(p_tall))
-    }}
-)
-
-person_local [
-    p_has: "has"
-    p_is: "is"
-    p_age: "years old"
-    p_w: "kg"
-    p_h: "centimeters"
-    p_tall: "tall"
-    p_a: "a"
-    p_space: "\s"
-    joao_name: "joao"
-
-    Person(joao)
-]
-
-scope main {
-    set(mem, joao.name, pointer(mem, joao_name))
-    set(mem, joao.age, 21)
-    set(mem, joao.weight, 78)
-    set(mem, joao.height, 179)
-    set(mem, joao.gender, NB)
-
-    
-    println(@joao.age)
-
-    // class simutation
-    joao_print()
+macro Person 
+{
+    struct $1{
+        name,
+        age,
+        weight,
+        height,
+        gender
+    }
 }
 
+Person(joao)
 
+scope main {
+    set(mem, joao.name, "joao")
+    set(mem, joao.age, 21)
+    set(mem, joao.weight, 78)
+    set(mem, joao.height, 159)
+    set(mem, joao.gender, NB)
+
+    pringln(@joao.name)
+    println(@joao.age)
+    println(@joao.weight)
+    println(@joao.height)
+    println(@joao.gender)
+}

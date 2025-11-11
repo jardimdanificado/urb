@@ -1,13 +1,9 @@
-// local scopes are skipped by default
-str ["hello world!"]
-
 // main is not a local scope
 // so it is interpreted by default
 // main is not require as it is in C, this is just for organization porpuses
 // main{} is a shortcut to scope main{}
 main {
-    pringln(pointer(mem, str))
+    pringln("hello world!")
 }
 
 // the code could be here as well, nothing changes
-// pring(pointer(mem, str))

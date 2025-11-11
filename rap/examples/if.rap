@@ -1,10 +1,8 @@
-str ["hello world!\n"]
-
 if (ge(1, 900))
 {
-    pring(pointer(mem, str))
+    pring("the condition is true\n")
 }
 else
 {
-    println(9999)
+    pringln("the condition is false!")
 }

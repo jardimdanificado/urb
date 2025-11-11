@@ -1,21 +1,21 @@
-// standalone interpreter alternative to embedding urb
-local data {
-    file: 0
-    error_message: \you\sneed\sto\spass\sa\sfilename!\n
-}
+// standalone interpreter alternative to embedding
 
+// we will store the file pointer here
+file [0]
+
+// this auto-runs
 main {
     jumpif(lt(len(args), 2), error)
     set(mem, file, load_urbin(get(args, 1)))
     interpret(exec, @file, stack)
-    goto(exit)
 }
 
-error {
-    pring(pointer(mem, error_message))
-    goto(exit_end)
-}
-
+// this too
 exit {
     free(@file)
 }
+
+// but this will only be accessed if the flux is intentionally redirected
+error [
+    pring("you need to pass a filename!\n")
+]

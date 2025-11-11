@@ -79,5 +79,3 @@ define({{if}}, {{
 
 define({{jumpif}}, $2 $1 {{jif}})
 define({{goto}}, {{$1}} 1 {{jif}})
-
-define({{string}}, {{pointer(mem, $1)}})
