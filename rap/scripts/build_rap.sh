@@ -13,6 +13,9 @@ if [[ -z LIBS ]]; then
     LIBS="${2:-libs/*/*}"
 fi
 
+if [[ -z "$COMPILER" ]]; then 
+    COMPILER="gcc -O3 -lm -g"
+fi
 
 mkdir -p build
 rm -rf build/urb_tar
@@ -23,7 +26,7 @@ mkdir -p build/urb_tar/rap/
 mkdir -p build/urb_tar/rap/src/
 mkdir -p build/urb_tar/rap/scripts/
 
-./rap/scripts/gen_interpreter.sh "$LIBS"
+COMPILER="$COMPILER" ./rap/scripts/gen_interpreter.sh "$LIBS"
 
 cp -r libs build/urb_tar/
 
@@ -37,7 +40,7 @@ cp build/urb.c build/urb_tar/build/
 
 cp -r rap/scripts build/urb_tar/rap/
 cp -r rap/src build/urb_tar/rap/
-cp -r makeself build/urb_tar/
+cp -rf makeself build/urb_tar/
 
 $makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/frontend.sh
 

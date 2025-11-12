@@ -1,8 +1,9 @@
 .PHONY: all clean debug install uninstall help
 libs ?= libs/*
 path ?= /usr/local/bin/
+compiler ?= gcc -O3 -lm -g
 all:
-	LIBS="libs/*" ./rap/scripts/build_rap.sh
+	COMPILER="$(compiler)" LIBS="libs/*" ./rap/scripts/build_rap.sh
 	@echo "if everything went fine exec can be found at build/rap"
 clean:
 	-rm -rf build rapper beatmaker makeself
@@ -13,13 +14,13 @@ ifndef filename
 	$(error filename missing! use: make debug filename=<file>)
 endif
 	mkdir -p build
-	./rap/scripts/debug.sh "$(filename)" "$(libs)"
+	COMPILER="$(compiler)" ./rap/scripts/debug.sh "$(filename)" "$(libs)"
 
 install: all
-	sudo cp build/rap "$(path)"
+	sudo cp build/rap "$(path)"/
 
 uninstall:
-	sudo rm "$(path)"rap
+	sudo rm "$(path)"/rap
 
 help:    # show this help message
 	@echo "Available targets:"

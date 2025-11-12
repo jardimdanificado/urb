@@ -4,8 +4,12 @@ if (( $# < 1 )); then
     exit
 fi
 
+if [[ -z "$COMPILER" ]]; then 
+    COMPILER="gcc -O3 -lm -g"
+fi
+
 mkdir -p build
-./rap/scripts/embed.sh "$1" "$2" > ./build/main
+COMPILER="$COMPILER" ./rap/scripts/embed.sh "$1" "$2" > ./build/main
 chmod +x ./build/main
 
 # check valgrind-out.txt for the debug output

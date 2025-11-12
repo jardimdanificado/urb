@@ -180,6 +180,14 @@ case "$command" in
             exit 1
           fi
           ;;
+        -cc)
+          shift
+          COMPILER="${1:-}"
+          if [[ -z "$COMPILER" ]]; then
+            echo "Error: -o requires a filename" >&2
+            exit 1
+          fi
+          ;;
         -*)
           echo "Unknown option for run: $1" >&2
           ;;
@@ -200,10 +208,10 @@ case "$command" in
 
     
     if [[ -n "$output" ]]; then
-      make
+      make compiler="$COMPILER"
       cp ./build/rap "$output"
     else
-      make install
+      make install compiler="$COMPILER"
     fi
 
     ;;

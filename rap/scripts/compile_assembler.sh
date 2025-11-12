@@ -2,5 +2,9 @@
 # pass your lib names here
 ./rap/scripts/gen_urb_c.sh $@
 
+if [[ -z "$COMPILER" ]]; then 
+    COMPILER="gcc -O3 -lm -g"
+fi
+
 # compile the bytecode assembler(beatmaker)
-gcc -o beatmaker rap/src/assembler.c -g -I. -lm -O3
+$COMPILER -o beatmaker rap/src/assembler.c -g -I. -lm -O3
