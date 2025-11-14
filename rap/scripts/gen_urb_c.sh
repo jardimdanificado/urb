@@ -9,7 +9,7 @@ fi
 mkdir -p build
 interpreter_c="build/urb.c"
 
-cat rap/src/syntax.m4 rap/src/reverse.h > build/urb_dictionary.h
+cat rap/src/syntax.h > build/urb_dictionary.h
 
 mapfile -t output < <(rap/scripts/extract_funcs.sh "$@")
 tmp_c="${output[0]}"

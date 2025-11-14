@@ -1,8 +1,8 @@
-if (ge(1, 900))
-{
+jumpif(ge(1, 900), if)
+goto(else)
+if [
     pring("the condition is true\n")
-}
-else
-{
+]
+else [
     pringln("the condition is false!")
-}
+]

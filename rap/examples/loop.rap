@@ -4,8 +4,8 @@
 // so technically, i points to the value 0
 i [0]
 
-while(le(@i, 100000))
-{
+loop [
     println(@i)
     set(mem, i, add(@i, 1))
-}
+]
+jumpif(le(@i, 100000), loop)

@@ -5,10 +5,10 @@ use feature 'say';
 
 # unified.pl (corrigido)
 # Lê todo o arquivo e transforma constructs:
-#  - scope NAME { ... }  -> scope({{NAME}}, {{ ... }})
-#  - while(cond) { ... } -> while({{cond}}, {{ ... }})
-#  - until(cond) { ... } -> until({{cond}}, {{ ... }})
-#  - if(cond) { ... } else { ... } -> if({{cond}}, {{then}}, {{else}})
+#  - scope NAME { ... }  -> scope(NAME,  ... )
+#  - while(cond) { ... } -> while(cond,  ... )
+#  - until(cond) { ... } -> until(cond,  ... )
+#  - if(cond) { ... } else { ... } -> if(cond, then, else)
 #
 # Principais diferenças: usa apenas pos($s)/\G para controle de leitura,
 # evitando duplicação e inconsistências.
@@ -209,7 +209,7 @@ sub process {
     my $len = length $s;
 
     while (pos($s) < $len) {
-        if ($s =~ /\G(.*?)\b(scope|if|while|until|local)\b/sgc) {
+        if ($s =~ /\G(.*?)\b(scope|local)\b/sgc) {
             $out .= $1;           # texto até a keyword
             my $kw = $2;
 
@@ -223,7 +223,7 @@ sub process {
                         my ($inner, $pos_after) = extract_block($s, pos($s)-1, '{', '}');
                         pos($s) = $pos_after;
                         my $proc = process($inner);
-                        $out .= "$kind({{$name}}, {{\n$proc\n}})";
+                        $out .= "$kind($name, \n$proc\n)";
                     } else {
                         $out .= "$kind $name";
                     }
@@ -231,57 +231,7 @@ sub process {
                     $out .= $kind;
                 }
             }
-            elsif ($kw eq 'if') {
-                $s =~ /\G\s*/gc;
-                if ($s =~ /\G\(/gc) {
-                    my ($cond, $pos_after_cond) = extract_block($s, pos($s)-1, '(', ')');
-                    pos($s) = $pos_after_cond;
-                    $s =~ /\G\s*/gc;
-                    if ($s =~ /\G\{/gc) {
-                        my ($then_block, $pos_after_then) = extract_block($s, pos($s)-1, '{', '}');
-                        pos($s) = $pos_after_then;
-                        # optional else
-                        my $else_block = '';
-                        $s =~ /\G\s*/gc;
-                        if ($s =~ /\Gelse\b/ogc) {
-                            $s =~ /\G\s*/gc;
-                            if ($s =~ /\G\{/gc) {
-                                ($else_block, $pos_after_then) = extract_block($s, pos($s)-1, '{', '}');
-                                pos($s) = $pos_after_then;
-                            } else {
-                                # else sozinho: roll back to before "else" so it remains literal
-                                pos($s) = pos($s) - length('else');
-                            }
-                        }
-                        my $proc_then = process($then_block);
-                        my $proc_else = $else_block ? process($else_block) : '';
-                        $out .= "if({{${cond}}}, {{\n$proc_then\n}}, {{\n$proc_else\n}})";
-                    } else {
-                        $out .= "if(${cond})";
-                    }
-                } else {
-                    $out .= 'if';
-                }
-            }
-            elsif ($kw eq 'while' or $kw eq 'until') {
-                my $kind = $kw;
-                $s =~ /\G\s*/gc;
-                if ($s =~ /\G\(/gc) {
-                    my ($cond, $pos_after_cond) = extract_block($s, pos($s)-1, '(', ')');
-                    pos($s) = $pos_after_cond;
-                    $s =~ /\G\s*/gc;
-                    if ($s =~ /\G\{/gc) {
-                        my ($body, $pos_after_body) = extract_block($s, pos($s)-1, '{', '}');
-                        pos($s) = $pos_after_body;
-                        my $proc_body = process($body);
-                        $out .= "$kind({{${cond}}}, {{\n$proc_body\n}})";
-                    } else {
-                        $out .= "$kind($cond)";
-                    }
-                } else {
-                    $out .= $kind;
-                }
-            } else {
+            else {
                 $out .= $kw;
             }
         } else {
