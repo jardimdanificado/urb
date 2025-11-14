@@ -9,8 +9,6 @@ fi
 mkdir -p build
 interpreter_c="build/urb.c"
 
-cat rap/src/syntax.h > build/urb_dictionary.h
-
 mapfile -t output < <(rap/scripts/extract_funcs.sh "$@")
 tmp_c="${output[0]}"
 funcs=("${output[@]:1}")
@@ -81,15 +79,5 @@ funcs=("${output[@]:1}")
     cat "$tmp_c"
     echo
 } > "$interpreter_c"
-
-# gera dicionário de macros
-{
-    for f in "${funcs[@]}"; do
-        real_name="${f##*:}"
-        clean_name=$(echo "$real_name" | sed -E 's/^[Uu][Rr][Bb]_//')
-        echo "#define $clean_name(...) REVERSE(__VA_ARGS__) $clean_name"
-    done
-    echo
-} >> "build/urb_dictionary.h"
 
 rm -f "$tmp_c"

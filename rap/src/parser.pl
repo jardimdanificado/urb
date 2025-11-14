@@ -3,16 +3,6 @@ use strict;
 use warnings;
 use feature 'say';
 
-# unified.pl (corrigido)
-# Lê todo o arquivo e transforma constructs:
-#  - scope NAME { ... }  -> scope(NAME,  ... )
-#  - while(cond) { ... } -> while(cond,  ... )
-#  - until(cond) { ... } -> until(cond,  ... )
-#  - if(cond) { ... } else { ... } -> if(cond, then, else)
-#
-# Principais diferenças: usa apenas pos($s)/\G para controle de leitura,
-# evitando duplicação e inconsistências.
-
 local $/;
 my $src = <>;
 $src = '' unless defined $src;
@@ -193,6 +183,36 @@ $src =~ s{
 }egx;
 # --- fim da conversão ---
 
+# --- reordena chamadas foo(a,b,c,...) para "e d c b a foo" (reversão total) ---
+{
+    my %forbidden = map { $_ => 1 } (keys %macros, 'local', 'scope');
+
+    1 while $src =~ s{
+        \b
+        ([A-Za-z_][A-Za-z0-9_]*)       # nome
+        \s*
+        \(
+            \s*([^()]*?)\s*            # args simples
+        \)
+    }{
+        my ($name, $args_raw) = ($1, $2);
+
+        $forbidden{$name} ? "$name($args_raw)" : do {
+            my @args = map { s/^\s+|\s+$//gr } split /,/, $args_raw, -1;
+
+            # lista invertida
+            @args = reverse @args;
+
+            # coloca o nome no final
+            push @args, $name;
+
+            join(' ', @args);
+        };
+    }egx;
+}
+# --- fim ---
+
+
 $src = add_scope_and_local($src);
 
 # garantir que pos começa em zero
@@ -204,38 +224,56 @@ sub process {
     my ($s) = @_;
     my $out = '';
 
-    # assegura ponteiro no início para esta string localmente
     pos($s) = 0;
     my $len = length $s;
 
     while (pos($s) < $len) {
-        if ($s =~ /\G(.*?)\b(scope|local)\b/sgc) {
-            $out .= $1;           # texto até a keyword
-            my $kw = $2;
 
-            if ($kw eq 'scope' or $kw eq 'local') {
-                my $kind = $kw;
+        # tenta achar scope/local
+        if ($s =~ /\G(.*?)\b(scope|local)\b/sgc) {
+            my $before = $1;
+            my $kw     = $2;
+            $out .= $before;
+
+            # pega nome
+            $s =~ /\G\s*/gc;
+            if ($s =~ /\G([A-Za-z0-9_]+)\s*/gc) {
+                my $name = $1;
+
+                # pega bloco
                 $s =~ /\G\s*/gc;
-                if ($s =~ /\G([A-Za-z0-9_]+)\s*/gc) {
-                    my $name = $1;
-                    $s =~ /\G\s*/gc;
-                    if ($s =~ /\G\{/gc) {
-                        my ($inner, $pos_after) = extract_block($s, pos($s)-1, '{', '}');
-                        pos($s) = $pos_after;
-                        my $proc = process($inner);
-                        $out .= "$kind($name, \n$proc\n)";
+                if ($s =~ /\G\{/gc) {
+                    my ($inner, $pos_after) = extract_block($s, pos($s)-1, '{', '}');
+                    pos($s) = $pos_after;
+
+                    my $proc = process($inner);
+
+                    if ($kw eq 'scope') {
+                        # scope(name, content) =>
+                        # name:
+                        # content
+                        # name_end:
+                        $out .= "$name:\n$proc\n${name}_end:";
                     } else {
-                        $out .= "$kind $name";
+                        # local(name, content) =>
+                        # name_end 1 jif
+                        # name:
+                        # content
+                        # name_end:
+                        $out .= "${name}_end 1 jif\n$name:\n$proc\n${name}_end:";
                     }
+
                 } else {
-                    $out .= $kind;
+                    # não tinha bloco, só deixe como está
+                    $out .= "$kw $name";
                 }
-            }
-            else {
+
+            } else {
+                # não tinha nome
                 $out .= $kw;
             }
+
         } else {
-            # copia o que sobrou (a partir da posição atual do ponteiro)
             my $p = pos($s) // 0;
             $out .= substr($s, $p);
             last;
@@ -244,6 +282,7 @@ sub process {
 
     return $out;
 }
+
 
 # extrai bloco balanceado começando no caractere de abertura indicado.
 # recebe a string inteira $s, posição do open char (offset), char_open, char_close

@@ -8,7 +8,6 @@ proper standards and documentation are currently WIP
 in case you using the urb language you will need:
 - a **gcc** *compatible* C compiler
 - **git**
-- GNU **m4**, i guess other m4 implementation might work as well, but i havent tested
 - **perl** 5.14 or newer
 - **make**, this one is optional if you call the scripts directly
 - **makeself**, we use this to create the standalone rap

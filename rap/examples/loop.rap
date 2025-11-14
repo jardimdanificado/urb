@@ -8,4 +8,5 @@ loop [
     println(@i)
     set(mem, i, add(@i, 1))
 ]
-jumpif(le(@i, 100000), loop)
+
+jif(le(@i, 100000), loop)

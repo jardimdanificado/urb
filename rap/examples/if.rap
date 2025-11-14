@@ -1,5 +1,5 @@
-jumpif(ge(1, 900), if)
-goto(else)
+jif(ge(1, 900), if)
+jif(1, else)
 if [
     pring("the condition is true\n")
 ]

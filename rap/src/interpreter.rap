@@ -5,7 +5,7 @@ file [0]
 
 // this auto-runs
 main {
-    jumpif(lt(len(args), 2), error)
+    error lt(len(args), 2) jif
     set(mem, file, load_urbin(get(args, 1)))
     interpret(exec, @file, stack)
 }

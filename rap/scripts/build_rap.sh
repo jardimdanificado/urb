@@ -35,14 +35,13 @@ cp Makefile build/urb_tar/
 cp rapper build/urb_tar/
 cp beatmaker build/urb_tar/
 cp urb.h build/urb_tar/
-cp build/urb_dictionary.h build/urb_tar/build/
 cp build/urb.c build/urb_tar/build/
 
 cp -r rap/scripts build/urb_tar/rap/
 cp -r rap/src build/urb_tar/rap/
 cp -rf makeself build/urb_tar/
 
-$makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/scripts/frontend.sh
+$makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/src/frontend.sh
 
 # we need to force it to be quiet, otherwise we would need to pass --quiet every call
 # we also turn on the "nodiskspace"
