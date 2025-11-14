@@ -1,32 +1,25 @@
-enum {
-    NB, 
-    MALE, 
-    FEMALE
-}
+NB [0]
+MALE [1]
+FEMALE [2]
 
 macro Person 
 {
-    struct $1{
-        name,
-        age,
-        weight,
-        height,
-        gender
-    }
+    $1 [
+        $1_name {0}
+        $1_age {$2}
+        $1_weight {$3}
+        $1_height {$4}
+        $1_gender {$5}
+    ]
+    set(mem, $1_name, "joao")
 }
 
-Person(joao)
+Person(joao, 21, 78, 159, NB)
 
 scope main {
-    set(mem, joao.name, "joao")
-    set(mem, joao.age, 21)
-    set(mem, joao.weight, 78)
-    set(mem, joao.height, 159)
-    set(mem, joao.gender, NB)
-
-    pringln(@joao.name)
-    println(@joao.age)
-    println(@joao.weight)
-    println(@joao.height)
-    println(@joao.gender)
+    pringln(@joao_name)
+    println(@joao_age)
+    println(@joao_weight)
+    println(@joao_height)
+    println(@joao_gender)
 }

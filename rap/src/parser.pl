@@ -71,7 +71,7 @@ for my $name (keys %macros) {
             my $n = $i + 1;
             my $v = $vals[$i];
             # protege barras e $ na inserção? deixar simples: substitui literais $n
-            $exp =~ s/\$\Q$n\E\b/$v/g;
+            $exp =~ s/\$\Q$n\E(?!\d)/$v/g;
         }
 
         # se houver placeholders não preenchidos, deixa vazio
@@ -103,11 +103,6 @@ sub add_scope_and_local {
             $out .= $ch; $i++; next;
         }
 
-        # ignora enum { ... }
-        if (substr($src, $i) =~ /\A(enum)\s*\{/) {
-            $out .= $&; $i += length($&); next;
-        }
-
         # ignora local nome { ... }
         if (substr($src, $i) =~ /\Alocal\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
             $out .= $&; $i += length($&); next;
@@ -115,11 +110,6 @@ sub add_scope_and_local {
 
         # ignora scope nome { ... }
         if (substr($src, $i) =~ /\Ascope\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
-            $out .= $&; $i += length($&); next;
-        }
-
-        # ignora struct nome { ... }
-        if (substr($src, $i) =~ /\Astruct\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/) {
             $out .= $&; $i += length($&); next;
         }
 
@@ -219,11 +209,11 @@ sub process {
     my $len = length $s;
 
     while (pos($s) < $len) {
-        if ($s =~ /\G(.*?)\b(scope|struct|if|while|until|local|enum)\b/sgc) {
+        if ($s =~ /\G(.*?)\b(scope|if|while|until|local)\b/sgc) {
             $out .= $1;           # texto até a keyword
             my $kw = $2;
 
-            if ($kw eq 'scope' or $kw eq 'local' or $kw eq 'struct') {
+            if ($kw eq 'scope' or $kw eq 'local') {
                 my $kind = $kw;
                 $s =~ /\G\s*/gc;
                 if ($s =~ /\G([A-Za-z0-9_]+)\s*/gc) {
@@ -290,16 +280,6 @@ sub process {
                     }
                 } else {
                     $out .= $kind;
-                }
-            } elsif ($kw eq 'enum') {
-                $s =~ /\G\s*/gc;
-                if ($s =~ /\G\{/gc) {
-                    my ($inner, $pos_after) = extract_block($s, pos($s)-1, '{', '}');
-                    pos($s) = $pos_after;
-                    my $proc = process($inner);
-                    $out .= "enum(\n$proc\n)";
-                } else {
-                    $out .= 'enum';
                 }
             } else {
                 $out .= $kw;

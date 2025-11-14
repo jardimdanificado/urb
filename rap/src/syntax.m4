@@ -1,29 +1,5 @@
 changequote({{,}})
 
-define({{foreach}}, {{pushdef({{$1}})_foreach($@)popdef({{$1}})}})
-define({{_arg1}}, {{$1}})
-define({{_foreach}}, {{ifelse({{$2}}, {{()}}, {{}},
-  {{define({{$1}}, _arg1$2)$3{{}}$0({{$1}}, (shift$2), {{$3}})}})}})
-
-define({{struct}}, 
-    {{
-        define({{tmp_name}}, $1)
-        tmp_name:
-        foreach({{_MEMBER}}, (shift($@)), {{tmp_name._MEMBER: 0
-        }})dnl
-    }}
-)dnl
-
-define({{enum}}, 
-  {{
-      define({{tmp_index}}, -1)
-      foreach({{_MEMBER}}, ($@), {{dnl
-        define({{tmp_index}}, incr(tmp_index))dnl
-        define(_MEMBER, tmp_index)dnl
-      }})dnl
-  }}
-)dnl
-
 define({{scope}}, 
   {{
     $1:
