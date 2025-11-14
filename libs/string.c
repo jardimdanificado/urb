@@ -52,3 +52,10 @@ void URB_strchr(List* stack)
     char ch = urb_pop(stack).i;
     urb_push(stack, (Value){.p = strchr(str, ch)});
 }
+
+void URB_strcmp(List* stack)
+{
+    char* str1 = urb_pop(stack).p;
+    char* str2 = urb_pop(stack).p;
+    urb_push(stack, (Value){.i = strcmp(str1, str2)});
+}

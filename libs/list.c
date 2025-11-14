@@ -140,3 +140,19 @@ void URB_pointer(List* stack)
     Int index = urb_pop(stack).i;
     urb_push(stack, (Value){.p = list->data + index});
 }
+
+void URB_find(List* stack)
+{
+    List* list = urb_pop(stack).p;
+    Value v = urb_pop(stack);
+    Int result = -1;
+    for (size_t i = 0; i < list->size; i++)
+    {
+        if (list->data[i].u == v.u)
+        {
+            result = i;
+        }
+    }
+    printf("result: %d\n", result);
+    urb_push(stack, (Value){.i = result});
+}

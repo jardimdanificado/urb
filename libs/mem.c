@@ -46,3 +46,11 @@ void URB_memget(List* stack)
     Int index = urb_pop(stack).i;
     urb_push(stack, (Value){.i = ptr[index]});
 }
+
+void URB_memcmp(List* stack)
+{
+    void* mem1 = urb_pop(stack).p;
+    void* mem2 = urb_pop(stack).p;
+    Int memsize = urb_pop(stack).i;
+    urb_push(stack, (Value){.i = memcmp(mem1, mem2, memsize)});
+}
