@@ -57,6 +57,8 @@ for my $name (keys %macros) {
 
         # faz as substituições de $1, $2
         my $exp = $body;
+        # $0 vira nome da macro
+        $exp =~ s/\$0\b/$name/g;
         for my $i (0 .. $#vals) {
             my $n = $i + 1;
             my $v = $vals[$i];
