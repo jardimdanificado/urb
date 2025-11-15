@@ -9,6 +9,7 @@ bruter.h
 build
 .tmp
 makeself
+quickjs
 # interpreter
 rapper
 # assembler

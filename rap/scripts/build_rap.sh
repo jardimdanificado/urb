@@ -1,13 +1,4 @@
 #!/bin/bash
-if [[ ! -v makeself ]]; then
-    if [ -e "./makeself" ]; then
-        makeself=./makeself/makeself.sh 
-    else
-        echo "makeself was NOT FOUND! trying to obtain it..."
-        git clone https://github.com/megastep/makeself.git
-        makeself=./makeself/makeself.sh 
-    fi
-fi
 
 if [[ -z LIBS ]]; then 
     LIBS="${2:-libs/*/*}"
@@ -26,6 +17,39 @@ mkdir -p build/urb_tar/rap/
 mkdir -p build/urb_tar/rap/src/
 mkdir -p build/urb_tar/rap/scripts/
 
+if [[ ! -v makeself ]]; then
+    if [ -e "./makeself" ]; then
+        makeself=./makeself/makeself.sh 
+    else
+        echo "makeself was NOT FOUND! trying to obtain it..."
+        git clone https://github.com/megastep/makeself.git
+        makeself=./makeself/makeself.sh 
+    fi
+    rm -rf makeself/.git*
+    rm -rf makeself/test
+    cp -r makeself build/urb_tar/
+else
+    makeself=makeself
+fi
+
+if [[ ! -v qjs ]]; then
+    if [ -e "./quickjs" ]; then
+        qjs=./quickjs/qjs 
+    else
+        echo "quickjs was NOT FOUND! trying to obtain it..."
+        git clone https://github.com/bellard/quickjs.git
+        cd quickjs
+        make
+        strip qjs
+        cd ..
+        qjs=./quickjs/qjs
+    fi
+    mkdir -p build/urb_tar/quickjs
+    cp ./quickjs/qjs build/urb_tar/quickjs/qjs
+else 
+    qjs=qjs
+fi
+
 COMPILER="$COMPILER" ./rap/scripts/gen_interpreter.sh "$LIBS"
 
 cp -r libs build/urb_tar/
@@ -39,7 +63,6 @@ cp build/urb.c build/urb_tar/build/
 
 cp -r rap/scripts build/urb_tar/rap/
 cp -r rap/src build/urb_tar/rap/
-cp -rf makeself build/urb_tar/
 
 $makeself ./build/urb_tar build/rap rap_compiler_and_interpreter ./rap/src/frontend.sh
 

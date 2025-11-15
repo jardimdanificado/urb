@@ -6,14 +6,14 @@ proper standards and documentation are currently WIP
 ## requirements
 
 in case you using the urb language you will need:
-- a **gcc** *compatible* C compiler
-- **git**
-- **perl** 5.14 or newer
-- **make**, this one is optional if you call the scripts directly
-- **makeself**, we use this to create the standalone rap
+- a C compiler, 
+- **git**, 
+- **make**, 
 - **bash**, **sed**, **xxd** etc...
 
-most linux will already have that, except for makeself, but we do clone makeself repo during the compilation.
+those are also required but the scripts clone and build'em manually:
+- **makeself**,
+- **quickjs**
 
 ## compiling
 
