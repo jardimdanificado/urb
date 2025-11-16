@@ -2,14 +2,14 @@ private NB {0}
 private MALE {1}
 private FEMALE {2}
 
-private Person 
+macro Person 
 {
     private $1 {
-        $1_name {0}
-        $1_age {$2}
-        $1_weight {$3}
-        $1_height {$4}
-        $1_gender {$5}
+        public $1_name {0}
+        public $1_age {$2}
+        public $1_weight {$3}
+        public $1_height {$4}
+        public $1_gender {$5}
     }
     set(mem, $1_name, "$1")
 }

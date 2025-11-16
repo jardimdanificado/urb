@@ -343,9 +343,19 @@ static inline List* rap_assemble(char* input_str)
                 }
                 if(found) break;
 
-                if(strcmp(token, "jif") == 0)
+                if(strcmp(token, "goto") == 0)
                 {
-                    urb_push(code, (Value){.i = INT_MIN});
+                    urb_push(code, (Value){.i = ALIAS_GOTO});
+                    break;
+                }
+                else if(strcmp(token, "goif") == 0)
+                {
+                    urb_push(code, (Value){.i = ALIAS_GOIF});
+                    break;
+                }
+                else if(strcmp(token, "goie") == 0)
+                {
+                    urb_push(code, (Value){.i = ALIAS_GOIE});
                     break;
                 }
                 else if (strcmp(token, "exec") == 0)

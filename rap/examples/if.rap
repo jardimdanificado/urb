@@ -1,5 +1,5 @@
-jif(ge(1, 900), if)
-jif(1, else)
+goif(ge(1, 900), if)
+goto(else)
 
 private if {
     pring("the condition is true\n")

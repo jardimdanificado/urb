@@ -45,7 +45,9 @@ typedef uintptr_t UInt;
     } while (0)
 
 enum {
-    ALIAS_JIF = INT_MIN,
+    ALIAS_GOTO = INT_MIN,
+    ALIAS_GOIF,
+    ALIAS_GOIE,
     ALIAS_EXEC,
     ALIAS_MEM,
     // NOT ACTUALLY USED HERE
@@ -53,7 +55,7 @@ enum {
 };
 
 // we have 8 reserved values
-// we have 3 special opcodes: jif, exec and mem
+// we have 3 special opcodes: goif, exec and mem
 // the the other 5 are unused, user may use it as placeholder for something
 // this hack is used by the rap assembler, where int_min + 3 is the args list
 #define OP_CODES_OFFSET 8
@@ -226,11 +228,24 @@ static inline void urb_interpret(List *exec, List* mem, List* _stack)
         {
             switch(mem->data[i].i)
             {
-                case INT_MIN:
+                case ALIAS_GOTO:
+                {
+                    i = urb_pop(stack).i - 1;
+                }
+                break;
+                case ALIAS_GOIF:
                 {
                     Int cond = urb_pop(stack).i;
                     Int posit = urb_pop(stack).i - 1;
                     i = cond ? posit : i;
+                }
+                break;
+                case ALIAS_GOIE:
+                {
+                    Int cond = urb_pop(stack).i;
+                    Int posit_true = urb_pop(stack).i - 1;
+                    Int posit_else = urb_pop(stack).i - 1;
+                    i = cond ? posit_true : posit_else;
                 }
                 break;
                 case ALIAS_EXEC:

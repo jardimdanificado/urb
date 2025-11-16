@@ -218,9 +218,9 @@ function process(s) {
                     if (kw === 'public') {
                         out += `${name}:\n${proc}\n${name}_end:`;
                     } else if (kw === 'protected') {
-                        protected_defs.push(`${name}_end 1 jif\n${name}:\n${proc}\n${name}_end:`);
+                        protected_defs.push(`${name}_end goto\n${name}:\n${proc}\n${name}_end:`);
                     } else if (kw === 'private') {
-                        out += `${name}_end 1 jif\n${name}:\n${proc}\n${name}_end:`;
+                        out += `${name}_end goto\n${name}:\n${proc}\n${name}_end:`;
                     }
                 } else {
                     out += `${kw} ${name}`;
