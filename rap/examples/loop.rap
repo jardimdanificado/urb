@@ -8,4 +8,4 @@ private loop {
     set(mem, i, add(@i, 1))
 }
 
-jif(le(i, 100000), loop)
+jif(le(@i, 100000), loop)

@@ -1,8 +1,10 @@
 jif(ge(1, 900), if)
 jif(1, else)
-if [
+
+private if {
     pring("the condition is true\n")
-]
-else [
+}
+
+private else {
     pringln("the condition is false!")
-]
+}

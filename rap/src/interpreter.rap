@@ -1,21 +1,21 @@
 // standalone interpreter alternative to embedding
 
 // we will store the file pointer here
-file [0]
+private file {0}
 
 // this auto-runs
-main {
+public main {
     error lt(len(args), 2) jif
     set(mem, file, load_urbin(get(args, 1)))
     interpret(exec, @file, stack)
 }
 
 // this too
-exit {
+public exit {
     free(@file)
 }
 
 // but this will only be accessed if the flux is intentionally redirected
-error [
+private error {
     pring("you need to pass a filename!\n")
-]
+}

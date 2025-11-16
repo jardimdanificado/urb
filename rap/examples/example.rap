@@ -1,11 +1,14 @@
-data [
+private data {
     a: 50
     b: 123
     // position string
-    str: `abcde1 234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka    \n dasjkdaj\n`
-]
+}
+
+protected str {
+    \abcde1\s234dasdajsdlakjdnlaknk124-1924dnkank\ndansdkandadkajkdka\s\s\s\s\n\sdasjkdaj\n
+}
     
-main { 
+public main { 
     println(@b)
     println(@a)
     println(main)

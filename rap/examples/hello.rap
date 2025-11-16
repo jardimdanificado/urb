@@ -2,7 +2,7 @@
 // so it is interpreted by default
 // main is not require as it is in C, this is just for organization porpuses
 // main{} is a shortcut to scope main{}
-main {
+public main {
     pringln("hello world!")
 }
 
