@@ -373,17 +373,7 @@ static inline List* rap_assemble(char* input_str)
                     urb_push(code, (Value){.i = ALIAS_ARGS});
                     break;
                 }
-                else if(strstr(token, "mem<") != NULL)
-                {
-                    urb_push(code, (Value){.i = INT_MAX - strtol(token + 4, NULL, 10)});
-                    break;
-                } 
-                else if(strstr(token, "exec<") != NULL)
-                {
-                    urb_push(code, (Value){.i = INT_MIN + OP_CODES_OFFSET});
-                    break;
-                }
-
+                
                 for(UInt j = 0; j < label_names->size; j++)
                 {
                     if(strcmp(token, label_names->data[j].p) == 0)
