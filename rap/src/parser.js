@@ -141,7 +141,7 @@ function convertDoubleQuoteStrings(src) {
                 .replace(/\n/g, '\\n')
                 .replace(/ /g, '\\s');
 
-            defs.push(`${id} [\\${formatted}]`);
+            defs.push(`protected ${id} {\\${formatted}}`);
             return `pointer(mem, ${id})`;
         }
     );
@@ -153,21 +153,6 @@ function convertDoubleQuoteStrings(src) {
     return src;
 }
 
-// === CONVERSÃO DE STRINGS `...` ===
-function convertBacktickStrings(src) {
-    src = src.replace(
-        /`((?:\\.|[^`\\]|\n)*)`/g,
-        (match, content) => {
-            let str = content
-                .replace(/\n/g, '\\n')
-                .replace(/ /g, '\\s');
-            return `\\${str}`;
-        }
-    );
-
-    return src;
-}
-
 // === REMOÇÃO DE COMENTÁRIOS ===
 function removeComments(src) {
     return src.replace(/\/\/[^\n\r]*/g, '');
@@ -175,7 +160,7 @@ function removeComments(src) {
 
 // === REORDENAÇÃO DE CHAMADAS ===
 function reorderFunctionCalls(src, macros) {
-    const forbidden = { ...macros, 'local': true, 'scope': true };
+    const forbidden = { ...macros, 'private': true, 'public': true, 'protected': true };
 
     let changed = true;
     while (changed) {
@@ -200,91 +185,15 @@ function reorderFunctionCalls(src, macros) {
     return src;
 }
 
-// === ADICIONAR SCOPE E LOCAL ===
-function addScopeAndLocal(src) {
-    let out = '';
-    let i = 0;
-    let inString = false;
-    let quote = '';
-
-    while (i < src.length) {
-        const ch = src[i];
-
-        if (!inString && (ch === '"' || ch === "'")) {
-            inString = true;
-            quote = ch;
-            out += ch;
-            i++;
-            continue;
-        } else if (inString) {
-            if (ch === '\\') {
-                out += src.substring(i, i + 2);
-                i += 2;
-                continue;
-            }
-            if (ch === quote) {
-                inString = false;
-                quote = '';
-                out += ch;
-                i++;
-                continue;
-            }
-            out += ch;
-            i++;
-            continue;
-        }
-
-        const localMatch = src.substring(i).match(/^local\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/);
-        if (localMatch) {
-            out += localMatch[0];
-            i += localMatch[0].length;
-            continue;
-        }
-
-        const scopeMatch = src.substring(i).match(/^scope\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/);
-        if (scopeMatch) {
-            out += scopeMatch[0];
-            i += scopeMatch[0].length;
-            continue;
-        }
-
-        const nameOpenMatch = src.substring(i).match(/^([A-Za-z_][A-Za-z0-9_]*)\s*\{/);
-        if (nameOpenMatch) {
-            const name = nameOpenMatch[1];
-            out += `scope ${name} {`;
-            i += nameOpenMatch[0].length;
-            continue;
-        }
-
-        const nameOpenBracketMatch = src.substring(i).match(/^([A-Za-z_][A-Za-z0-9_]*)\s*\[/);
-        if (nameOpenBracketMatch) {
-            const name = nameOpenBracketMatch[1];
-            out += `local ${name} {`;
-            i += nameOpenBracketMatch[0].length;
-            continue;
-        }
-
-        if (ch === ']') {
-            out += '}';
-            i++;
-            continue;
-        }
-
-        out += ch;
-        i++;
-    }
-
-    return out;
-}
-
 // === PROCESSAMENTO PRINCIPAL ===
 function process(s) {
     let out = '';
     let i = 0;
+    let protected_defs = [];
 
     while (i < s.length) {
         const remaining = s.substring(i);
-        const match = remaining.match(/^(.*?)\b(scope|local)\b/s);
+        const match = remaining.match(/^(.*?)\b(public|private|protected)\b/s);
 
         if (match) {
             const before = match[1];
@@ -306,9 +215,11 @@ function process(s) {
 
                     const proc = process(inner);
 
-                    if (kw === 'scope') {
+                    if (kw === 'public') {
                         out += `${name}:\n${proc}\n${name}_end:`;
-                    } else {
+                    } else if (kw === 'protected') {
+                        protected_defs.push(`${name}_end 1 jif\n${name}:\n${proc}\n${name}_end:`);
+                    } else if (kw === 'private') {
                         out += `${name}_end 1 jif\n${name}:\n${proc}\n${name}_end:`;
                     }
                 } else {
@@ -321,6 +232,10 @@ function process(s) {
             out += s.substring(i);
             break;
         }
+    }
+
+    if (protected_defs.length > 0) {
+        out = protected_defs.join('\n') + '\n' + out;
     }
 
     return out;
@@ -339,9 +254,7 @@ function preprocessCode(input) {
     src = srcAfterMacros;
     src = expandMacros(src, macros);
     src = convertDoubleQuoteStrings(src);
-    src = convertBacktickStrings(src);
     src = reorderFunctionCalls(src, macros);
-    src = addScopeAndLocal(src);
     src = process(src);
 
     return src;

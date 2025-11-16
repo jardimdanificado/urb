@@ -1,16 +1,16 @@
-NB [0]
-MALE [1]
-FEMALE [2]
+private NB {{0}}
+private MALE {{1}}
+private FEMALE {{2}}
 
-macro Person 
+private Person 
 {
-    $1 [
+    $1 {{
         $1_name {0}
         $1_age {$2}
         $1_weight {$3}
         $1_height {$4}
         $1_gender {$5}
-    ]
+    }}
     set(mem, $1_name, "$1")
 }
 
