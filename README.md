@@ -14,7 +14,7 @@ in libs/std you can find some libs written for the VM, function pointers must be
 the interpreter consists in a function that receives 3 arguments: exec, mem and stack.
 
 ## exec
-exec is where we store our "opcodes", our native functions written in C, exec occupies the first values of a integer, from `INT_MIN` to `INT_MIN + exec.size`, if one of these values is read in the code it will automatically call the function;
+exec is where we store our "opcodes", our native functions written in C, exec occupies the first values of a integer, from `INT_MIN + OP_CODES_OFFSET` to `INT_MIN + OP_CODES_OFFSET + mem.size`, if one of these values is read in the code it will automatically call the function;
 
 ## mem
 mem is our code, and also our memory as the name suggests.
