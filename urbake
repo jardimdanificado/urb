@@ -4,6 +4,24 @@
 TEMP_FILE=$(mktemp -d)
 trap "rm -rf $TEMP_FILE" EXIT
 
+# Coletar arquivos .c e .papagaio do diretório
+declare -a C_FILES
+declare -a PAPAGAIO_FILES
+
+for file in *.c; do [ -f "$file" ] && C_FILES+=("$file"); done
+for file in *.papagaio; do [ -f "$file" ] && PAPAGAIO_FILES+=("$file"); done
+
+# Adicionar arquivos dos argumentos
+if [ $# -gt 0 ]; then
+    for arg in "$@"; do
+        if [[ "$arg" == *.c ]]; then
+            C_FILES+=("$arg")
+        elif [[ "$arg" == *.papagaio ]]; then
+            PAPAGAIO_FILES+=("$arg")
+        fi
+    done
+fi
+
 {
     echo 'C {
 $eval{
@@ -126,9 +144,29 @@ $pattern{C $block c_code{}{}}
     }
 }
 '
-    cat *.c
+    for file in "${C_FILES[@]}"; do cat "$file"; done
     echo "}"
-    cat *.papagaio
+    for file in "${PAPAGAIO_FILES[@]}"; do cat "$file"; done
 } > "$TEMP_FILE/a.papagaio"
-papagaio "$TEMP_FILE/a.papagaio" *.urb
+
+# Coletar arquivos .urb do diretório
+declare -a URB_FILES
+
+for file in *.urb; do [ -f "$file" ] && URB_FILES+=("$file"); done
+
+# Adicionar arquivos .urb dos argumentos
+if [ $# -gt 0 ]; then
+    for arg in "$@"; do
+        if [[ "$arg" == *.urb ]]; then
+            URB_FILES+=("$arg")
+        fi
+    done
+fi
+
+# Se houver arquivos .urb, processa com papagaio; senão mostra o a.papagaio
+if [ ${#URB_FILES[@]} -gt 0 ]; then
+    papagaio "$TEMP_FILE/a.papagaio" "${URB_FILES[@]}"
+else
+    cat "$TEMP_FILE/a.papagaio"
+fi
 # gcc "$TEMP_FILE/a.c" -o a.out
