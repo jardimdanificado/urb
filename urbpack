@@ -55,20 +55,20 @@ $eval{
             typeof x === "bigint"
         );
     }
-    papagaio.counter = 0;
-    papagaio.funcs = [];
-    papagaio.labels = [];
-    papagaio.output = "#include \"urb.h\"\n\n";
-    papagaio.assemble = (stuff) => {
+    this.counter = 0;
+    this.funcs = [];
+    this.labels = [];
+    this.output = "#include \"urb.h\"\n\n";
+    this.assemble = (stuff) => {
         stuff = stuff.trim();
-        let funcs = papagaio.funcs.join(" ").replaceAll("URB_", "").replaceAll("urb_", "").split(" ");
-        let code = papagaio.content.replaceAll("\n", " ").trim().split(" ");
+        let funcs = this.funcs.join(" ").replaceAll("URB_", "").replaceAll("urb_", "").split(" ");
+        let code = this.content.replaceAll("\n", " ").trim().split(" ");
         let result = "\nList *mem = urb_new(" + code.length + ");\n";
         for (let i = 0; i < code.length;i++)
         {
             if (code[i].endsWith(":"))
             {
-                papagaio.labels.push({index: i, name: code[i].replace(":", "")});
+                this.labels.push({index: i, name: code[i].replace(":", "")});
                 code = code.filter((word, index) => index != i);
                 i--;
             }
@@ -87,7 +87,7 @@ $eval{
             else
             {
                 let found = false;
-                for (const label of papagaio.labels)
+                for (const label of this.labels)
                 {
                     if (label.name == token)
                     {
@@ -112,18 +112,18 @@ $eval{
         }
         return result;
     }
-    papagaio.exit = () =>{
-        papagaio.output += "\nint main(int argc, char* argv[]){\n";
-        papagaio.output += papagaio.assemble(papagaio.content);
-        papagaio.output += "\n\tList *exec = urb_new(" + papagaio.funcs.length + ");\n";
-        for (const name of papagaio.funcs)
+    this.exit = () =>{
+        this.output += "\nint main(int argc, char* argv[]){\n";
+        this.output += this.assemble(this.content);
+        this.output += "\n\tList *exec = urb_new(" + this.funcs.length + ");\n";
+        for (const name of this.funcs)
         {
-            papagaio.output += "\turb_push(exec, (Value){.p = " + name + "});\n";
+            this.output += "\turb_push(exec, (Value){.p = " + name + "});\n";
         }
-        papagaio.output += "\turb_interpret(exec, mem, NULL);\n";
-        papagaio.output += "\turb_free(exec);\n";
-        papagaio.output += "}\n";
-        papagaio.content = papagaio.output;
+        this.output += "\turb_interpret(exec, mem, NULL);\n";
+        this.output += "\turb_free(exec);\n";
+        this.output += "}\n";
+        this.content = this.output;
         return "";
     }
     return ""
@@ -132,14 +132,14 @@ $pattern{C $block c_code{}{}}
 {
     $pattern {\n} {\\n}
     $eval{
-        papagaio.output = papagaio.output + " " + `$c_code`;
+        this.output = this.output + " " + `$c_code`;
         return "";
     }
     $pattern{void $funcname(List * stack) $block conteudo{} {}}
     {
         $eval{
-            papagaio.funcs.push("$funcname");
-            return papagaio.match;
+            this.funcs.push("$funcname");
+            return this.match;
         }
     }
 }
