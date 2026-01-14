@@ -92,8 +92,6 @@ static inline Value              urb_pop(List *list);
 static inline Value              urb_shift(List *list);
 // remove and return the value at index i in the list, shifting the rest of the list
 static inline Value              urb_remove(List *list, Int i);
-// interpret function
-static inline void               urb_interpret(List *exec, List* mem, List* _stack);
 
 // index cycle deal with negative indexes, -1 is the last value, and so on
 #define INDEX_CYCLE(index) ((index < 0) ? (list->size + index) : index)
@@ -153,7 +151,6 @@ static inline void urb_unshift(List *list, Value value)
 
 static inline void urb_insert(List *list, Int index, Value value)
 {
-    Int original_index = index;
     if (list->size == list->capacity)
         urb_double(list);
 
@@ -186,7 +183,6 @@ static inline Value urb_shift(List *list)
 
 static inline Value urb_remove(List *list, Int i)
 {
-    Int original_index = i;
     i = INDEX_CYCLE(i);
 
     if (list->size <= 0)
