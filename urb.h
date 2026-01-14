@@ -15,7 +15,7 @@
 #include <ctype.h>
 
 // version
-#define URB_VERSION "0.9.4a"
+#define URB_VERSION "0.9.5"
 
 typedef intptr_t Int;
 typedef uintptr_t UInt;
@@ -44,22 +44,6 @@ typedef uintptr_t UInt;
         abort();\
     } while (0)
 
-enum {
-    ALIAS_GOTO = INT_MIN,
-    ALIAS_GOIF,
-    ALIAS_GOIE,
-    ALIAS_EXEC,
-    ALIAS_MEM,
-    // NOT ACTUALLY USED HERE
-    ALIAS_ARGS
-};
-
-// we have 8 reserved values
-// we have 3 special opcodes: goif, exec and mem
-// the the other 5 are unused, user may use it as placeholder for something
-// this hack is used by the rap assembler, where int_min + 3 is the args list
-#define OP_CODES_OFFSET 8
-
 typedef struct List List;
 typedef union Value Value;
 typedef void (*Function)(List *stack);
@@ -72,6 +56,7 @@ union Value
     Int i;
     UInt u;
     Float f;
+    UHalf h[2];
     void* p;
     Function fn;
 };
@@ -214,59 +199,6 @@ static inline Value urb_remove(List *list, Int i)
     memmove(&(list->data[i]), &(list->data[i + 1]), elements_to_move * sizeof(Value)); 
     list->size--; 
     return ret;
-}
-
-static inline void urb_interpret(List *exec, List* mem, List* _stack)
-{
-    List *stack;
-    stack = (_stack == NULL) ? urb_new(URB_DEFAULT_SIZE) : _stack;
-
-    // interpreting
-    for (Int i = 0; i < mem->size; i++)
-    {
-        if(mem->data[i].i < INT_MIN + exec->size + OP_CODES_OFFSET)
-        {
-            switch(mem->data[i].i)
-            {
-                case ALIAS_GOTO:
-                {
-                    i = urb_pop(stack).i - 1;
-                }
-                break;
-                case ALIAS_GOIF:
-                {
-                    Int cond = urb_pop(stack).i;
-                    Int posit = urb_pop(stack).i - 1;
-                    i = cond ? posit : i;
-                }
-                break;
-                case ALIAS_GOIE:
-                {
-                    Int cond = urb_pop(stack).i;
-                    Int posit_true = urb_pop(stack).i - 1;
-                    Int posit_else = urb_pop(stack).i - 1;
-                    i = cond ? posit_true : posit_else;
-                }
-                break;
-                case ALIAS_EXEC:
-                    urb_push(stack, (Value){.p = exec});
-                break;
-                case ALIAS_MEM:
-                    urb_push(stack, (Value){.p = mem});
-                break;
-                default:
-                    exec->data[INT_MIN + mem->data[i].i - OP_CODES_OFFSET].fn(stack);
-                break;
-            }
-        }
-        else if(mem->data[i].i > INT_MAX - mem->size)
-            urb_push(stack, mem->data[INT_MAX - mem->data[i].i]);
-        else
-            urb_push(stack, mem->data[i]);
-    }
-
-    if (_stack == NULL) 
-        urb_free(stack); // free stack only if it was created here
 }
 
 #endif // ifndef URB_H macro
